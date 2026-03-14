@@ -85,13 +85,13 @@
           </ul>
         </div>
         <div>
-          <h4 class="font-bold text-green-700 mb-2 text-lg">2. 事件順序（吸氣）</h4>
+          <h4 class="font-bold text-blue-700 mb-2 text-lg">2. 事件順序（吸氣）</h4>
           <ol class="list-decimal pl-6 space-y-2">
             <li>肋間肌和橫膈膜肌肉<strong class="text-black">收縮</strong>。</li>
             <li>肋骨<strong class="text-black">向上及向外移</strong>，同時橫膈膜變得平坦，使胸腔<strong class="text-black">體積增加</strong>。</li>
             <li>胸膜腔內壓下降，將肺部向外拉。</li>
             <li>肺部<strong class="text-black">體積增加</strong>。</li>
-            <li>肺泡壓力降至<strong class="text-black">低於大氣壓力</strong>（綠線跌破 0）。</li>
+            <li>肺泡壓力降至<strong class="text-black">低於大氣壓力</strong>（藍線跌破 0）。</li>
             <li>空氣順著壓力梯度被吸入肺部。</li>
           </ol>
         </div>
@@ -170,7 +170,7 @@
           {
             label: '肺泡壓力 (Alveolar Pressure)',
             data: alveolarData,
-            borderColor: '#10b981',
+            borderColor: '#2563eb', // Changed to blue
             borderWidth: 4,
             pointRadius: 0,
             tension: 0.4
@@ -315,10 +315,9 @@
 
     // Spacebar shortcut to play/pause
     document.addEventListener('keydown', (e) => {
-      // Check if spacebar is pressed and we are not focused on an input field
       if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
-        e.preventDefault(); // Prevents the browser from scrolling down
-        playBtn.click(); // Triggers the play/pause button logic
+        e.preventDefault(); 
+        playBtn.click(); 
       }
     });
 
