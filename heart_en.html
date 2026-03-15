@@ -1,189 +1,265 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Breathing Simulator (DSE Biology)</title>
+  <title>Capillary Bed Simulator (DSE Biology)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Custom scrollbar for better look */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-gray-800">
+<body class="bg-slate-50 p-4 font-sans text-gray-800">
 
-  <div class="w-full max-w-7xl mx-auto bg-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
-    <div class="mb-6 text-center">
-      <h1 class="text-3xl font-bold text-gray-800">HKDSE Biology: Ventilation Mechanism</h1>
-      <p class="text-lg text-gray-600 mt-2">Interactive Simulation of Lung and Thoracic Cavity Pressure Changes</p>
+  <div class="w-full max-w-7xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">香港中學文憑生物科：微血管床的血流與血壓動態</h1>
+      <p class="text-lg text-slate-500 mt-2">觀察總橫切面積如何影響血流速度與物質交換</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col items-center justify-center">
-        <h2 class="text-2xl font-bold mb-3 text-gray-700">Thoracic Cavity Model</h2>
-        <div id="phaseText" class="text-3xl font-extrabold mb-6 text-blue-600">Inhalation</div>
+      <div class="lg:col-span-12 bg-slate-50 p-4 rounded-xl shadow-inner border border-slate-200 flex flex-col items-center justify-center relative overflow-hidden">
+        <div class="absolute top-4 left-6 text-xl font-bold text-red-600 bg-white/80 px-3 py-1 rounded shadow-sm z-10">小動脈</div>
+        <div class="absolute top-4 right-6 text-xl font-bold text-blue-600 bg-white/80 px-3 py-1 rounded shadow-sm z-10">小靜脈</div>
+        <div class="absolute top-4 left-1/2 -translate-x-1/2 text-xl font-bold text-purple-600 bg-white/80 px-3 py-1 rounded shadow-sm z-10">微血管床</div>
 
-        <div class="relative w-full aspect-square max-w-lg bg-blue-50 rounded-xl overflow-hidden border-2 border-blue-100 flex justify-center items-center">
-          <svg viewBox="0 0 200 252" class="w-full h-full p-2">
-            <path d="M 91 18 L 91 80 L 109 80 L 109 18 Z" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2" />
-            <path d="M 91 80 L 66 107 L 75 112 L 100 86 Z" fill="#cbd5e1" />
-            <path d="M 109 80 L 134 107 L 125 112 L 100 86 Z" fill="#cbd5e1" />
-
-            <g id="lungs" style="transform-origin: 100px 80px; transition: transform 0.1s linear;">
-              <path d="M 95 85 C 66 85, 46 112, 52 150 C 58 168, 84 163, 95 149 Z" fill="#fca5a5" opacity="0.9" />
-              <path d="M 105 85 C 134 85, 154 112, 148 150 C 142 168, 116 163, 105 149 Z" fill="#fca5a5" opacity="0.9" />
-            </g>
+        <div class="w-full h-64 md:h-80 max-w-5xl relative">
+          <svg id="vesselSvg" viewBox="0 0 1000 300" class="w-full h-full drop-shadow-md">
+            <rect x="0" y="0" width="1000" height="300" fill="#fdf4ff" opacity="0.6" />
             
-            <g id="particlesGroup"></g>
+            <path d="M 0 120 L 200 120 L 250 80 M 0 180 L 200 180 L 250 220" fill="none" stroke="#ef4444" stroke-width="6" />
+            <path d="M 0 120 L 200 120 L 250 80 L 250 220 L 200 180 L 0 180 Z" fill="#fee2e2" />
+            
+            <path d="M 1000 120 L 800 120 L 750 80 M 1000 180 L 800 180 L 750 220" fill="none" stroke="#3b82f6" stroke-width="6" />
+            <path d="M 1000 120 L 800 120 L 750 80 L 750 220 L 800 180 L 1000 180 Z" fill="#dbeafe" />
 
-            <text x="100" y="126" text-anchor="middle" font-size="16" font-weight="bold" fill="#7f1d1d" opacity="0.8">Lungs</text>
+            <g fill="none" stroke="#a855f7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+              <path d="M 250 80 C 400 30, 600 30, 750 80" />
+              <path d="M 200 100 C 400 70, 600 70, 800 100" />
+              <path d="M 200 150 L 800 150" />
+              <path d="M 200 200 C 400 230, 600 230, 800 200" />
+              <path d="M 250 220 C 400 270, 600 270, 750 220" />
+              
+              <path d="M 350 50 L 400 85 M 550 40 L 500 85" stroke-width="4"/>
+              <path d="M 300 110 L 350 150 M 600 110 L 550 150" stroke-width="4"/>
+              <path d="M 400 180 L 450 150 M 650 190 L 700 150" stroke-width="4"/>
+              <path d="M 450 250 L 500 215 M 700 235 L 650 210" stroke-width="4"/>
+            </g>
 
-            <path id="diaphragm" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round" style="transition: all 0.1s linear;" />
-            <text x="100" y="235" text-anchor="middle" font-size="14" font-weight="bold" fill="#ef4444">Diaphragm</text>
-
-            <path id="leftRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
-            <path id="rightRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
+            <g id="rbcGroup"></g>
           </svg>
         </div>
+
+        <div class="w-full max-w-5xl mt-4 px-4">
+          <input id="positionSlider" type="range" min="0" max="100" step="0.1" value="0" class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600 shadow-inner" />
+          <div class="flex justify-between text-sm text-slate-500 font-bold mt-2">
+            <span>小動脈端</span>
+            <span id="posLabel" class="text-purple-700 bg-purple-100 px-3 py-1 rounded-full text-sm">位置：0%</span>
+            <span>小靜脈端</span>
+          </div>
+        </div>
       </div>
 
-      <div class="lg:col-span-7 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col items-center">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700 text-center w-full">Pressure Changes Over Time</h2>
+      <div class="lg:col-span-12 flex flex-col lg:flex-row gap-6 mt-4">
         
-        <div class="relative w-full max-w-lg mx-auto flex-grow min-h-[550px] mb-4">
-          <canvas id="pressureChart"></canvas>
+        <div class="lg:w-2/3 bg-white p-4 rounded-xl shadow border border-slate-200 flex flex-col">
+          <h2 class="text-xl font-bold mb-2 text-slate-700 text-center">沿血管的數值變化</h2>
+          <div class="relative w-full flex-grow min-h-[400px]">
+            <canvas id="dynamicsChart"></canvas>
+          </div>
+          <div class="flex items-center justify-center space-x-6 mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <button id="playBtn" class="flex items-center justify-center px-6 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-md">
+              <span class="mr-2">⏸</span> 暫停 / 播放
+            </button>
+            <div class="text-sm text-slate-600">提示：圖表中的黃色垂直線代表上方紅血球的平均位置。</div>
+          </div>
         </div>
 
-        <div class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner space-y-3">
-          <div class="flex items-center justify-center space-x-4">
-            <button id="playBtn" title="Press Spacebar to Play/Pause" class="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-md text-xl pb-1">
-              ⏸
-            </button>
-            <button id="resetBtn" title="Reset" class="flex items-center justify-center w-10 h-10 bg-gray-300 text-gray-700 rounded-full hover:bg-gray-400 transition shadow-md text-lg pb-1">
-              ↺
-            </button>
-          </div>
+        <div class="lg:w-1/3 bg-orange-50 p-6 rounded-xl border-2 border-orange-200 shadow-sm flex flex-col">
+          <h3 class="font-extrabold text-xl mb-4 flex items-center text-orange-900 border-b-2 border-orange-200 pb-2">
+            <span class="bg-orange-500 text-white w-7 h-7 rounded-full inline-flex items-center justify-center mr-3 text-sm">!</span>
+            DSE 答題關鍵字
+          </h3>
           
-          <div class="w-full px-4">
-            <div class="flex justify-between text-sm text-gray-600 font-bold mb-1">
-              <span>0s</span>
-              <span id="timeDisplay" class="text-base text-blue-800">Time: 0.00s</span>
-              <span>4s</span>
+          <div class="space-y-5 text-[15px] text-slate-800 flex-grow overflow-y-auto">
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100 relative">
+               <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-lg"></div>
+               <h4 class="font-bold text-blue-700 mb-1">1. 血流速度為何在微血管降至最低？</h4>
+               <p>每條微血管雖然狹窄，但微血管床<strong class="text-orange-600">高度分支</strong>，使其<strong class="text-orange-600">總橫切面積</strong>比其他血管部分都大。<br/>(血流速度與總橫切面積成反比)</p>
             </div>
-            <input id="timeSlider" type="range" min="0" max="4" step="0.01" value="0" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100 relative">
+               <div class="absolute top-0 left-0 w-1 h-full bg-green-500 rounded-l-lg"></div>
+               <h4 class="font-bold text-green-700 mb-1">2. 速度緩慢的生物學意義？</h4>
+               <p>緩慢的血流讓血液與體細胞之間有<strong class="text-orange-600">較長時間</strong>進行<strong class="text-orange-600">物質交換</strong>（如氧氣、葡萄糖擴散入細胞）。</p>
+            </div>
+
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100 relative">
+               <div class="absolute top-0 left-0 w-1 h-full bg-red-500 rounded-l-lg"></div>
+               <h4 class="font-bold text-red-700 mb-1">3. 血壓為何大幅下降？</h4>
+               <p>微血管的管腔直徑非常狹窄，血液流動時所受的<strong class="text-orange-600">阻力很大</strong>（摩擦力），導致血壓急劇下降。</p>
+            </div>
+            
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100 relative">
+               <div class="absolute top-0 left-0 w-1 h-full bg-purple-500 rounded-l-lg"></div>
+               <h4 class="font-bold text-purple-700 mb-1">4. 小動脈的週期性變化</h4>
+               <p>圖表左側的血壓呈現波浪型，是因為血液直接受<strong class="text-orange-600">心的泵壓</strong>，血壓隨着心收縮和放鬆出現週期性變化。</p>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="mt-8 bg-yellow-50 p-6 rounded-lg border border-yellow-300 text-gray-800 shadow-sm">
-      <h3 class="font-bold text-xl mb-4 flex items-center text-yellow-900">
-        <span class="bg-yellow-400 text-yellow-900 w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-lg">!</span>
-        DSE Key Concept Notes:
-      </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-base leading-relaxed">
-        <div>
-          <h4 class="font-bold text-purple-700 mb-2 text-lg">1. Intrapleural Pressure (Purple Line)</h4>
-          <ul class="list-disc pl-6 space-y-2">
-            <li>It is <strong class="text-black">always negative</strong> (below atmospheric pressure). This slight vacuum keeps the lungs adhered to the chest wall, preventing lung collapse.</li>
-            <li>During inhalation, as the thoracic cavity expands, intrapleural pressure <strong class="text-black">drops further</strong> (from –4 to –8 mm Hg).</li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-bold text-red-700 mb-2 text-lg">2. Sequence of Events (Inhalation)</h4>
-          <ol class="list-decimal pl-6 space-y-2">
-            <li>Intercostal muscles and diaphragm <strong class="text-black">contract</strong>.</li>
-            <li>Ribs move <strong class="text-black">upwards and outwards</strong>, while the diaphragm flattens, causing thoracic cavity <strong class="text-black">volume to increase</strong>.</li>
-            <li>Intrapleural pressure drops, pulling the lungs outward.</li>
-            <li>Lung <strong class="text-black">volume increases</strong>.</li>
-            <li>Alveolar pressure drops <strong class="text-black">below atmospheric pressure</strong> (deep red line dips below 0).</li>
-            <li>Air is drawn into the lungs down the pressure gradient.</li>
-          </ol>
-        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // --- 1. Generate Data ---
-    const times = [];
-    const alveolarData = [];
-    const intrapleuralData = [];
+    // --- 1. Data Generation mapping to 0-100% position ---
+    const positions = [];
+    const areaData = [];
+    const pressureData = [];
+    const velocityData = [];
     
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 10;
-      times.push(t);
-      alveolarData.push(-1.5 * Math.sin((Math.PI * t) / 2));
-      intrapleuralData.push(-6 + 2 * Math.cos((Math.PI * t) / 2));
+    // Simulating the curve from HKDSE textbook Fig 8.16
+    for (let i = 0; i <= 100; i++) {
+      positions.push(i);
+      
+      // X coordinates regions:
+      // 0-25: Arteriole
+      // 25-75: Capillary
+      // 75-100: Venule
+
+      // Total Cross-Sectional Area (Green line) - Massive peak in middle
+      let area = 5;
+      if (i > 20 && i < 80) {
+        // Bell curve shape for capillary bed
+        let midDist = Math.abs(i - 50);
+        area = 5 + 85 * Math.exp(-(midDist * midDist) / 300);
+      }
+      areaData.push(area);
+
+      // Blood Pressure (Black line) - Drops significantly, pulsatile early
+      let pressure;
+      if (i <= 25) {
+        // Pulsatile in arteriole dropping slightly
+        pressure = 85 - (i * 0.4) + 8 * Math.sin(i * 1.5);
+      } else if (i <= 75) {
+        // Sharp drop in capillaries, loss of pulse
+        let progress = (i - 25) / 50;
+        pressure = 75 * (1 - progress) + 15 * progress;
+      } else {
+        // Gentle drop in venule
+        let progress = (i - 75) / 25;
+        pressure = 15 * (1 - progress) + 8 * progress;
+      }
+      pressureData.push(Math.max(0, pressure));
+
+      // Blood Flow Velocity (Red line) - High, drops to near zero, rises slightly
+      let velocity;
+      if (i <= 25) {
+        velocity = 45 - (i * 0.6);
+      } else if (i <= 75) {
+        // Inversely proportional to area roughly
+        let progress = (i - 25) / 50;
+        let midDist = Math.abs(i - 50);
+        velocity = Math.max(1, 15 * Math.exp(-(midDist * midDist) / 150));
+        // Force dip in the absolute middle
+        if(i > 30 && i < 70) velocity = 5 - (4 * Math.sin(Math.PI * (i-30)/40)); 
+      } else {
+        let progress = (i - 75) / 25;
+        velocity = 2 + progress * 8; 
+      }
+      velocityData.push(Math.max(0, velocity));
     }
 
-    window.currentTime = 0;
-
     // --- 2. Setup Chart.js ---
-    const customBackgroundAndLinePlugin = {
-      id: 'customBackgroundAndLine',
+    let currentGlobalPos = 0;
+    
+    // Custom plugin to draw backgrounds and tracking line
+    const dynamicBackgroundPlugin = {
+      id: 'dynamicBackground',
       beforeDraw: (chart) => {
         const ctx = chart.ctx;
         const xAxis = chart.scales.x;
         const yAxis = chart.scales.y;
-        ctx.save();
-        // Inhalation background
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.06)';
-        ctx.fillRect(xAxis.getPixelForValue(0), yAxis.top, xAxis.getPixelForValue(2) - xAxis.getPixelForValue(0), yAxis.bottom - yAxis.top);
-        // Exhalation background
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
-        ctx.fillRect(xAxis.getPixelForValue(2), yAxis.top, xAxis.getPixelForValue(4) - xAxis.getPixelForValue(2), yAxis.bottom - yAxis.top);
         
-        // Atmospheric Pressure Line
-        const zeroY = yAxis.getPixelForValue(0);
-        ctx.beginPath();
-        ctx.moveTo(xAxis.left, zeroY);
-        ctx.lineTo(xAxis.right, zeroY);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#9ca3af';
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
-        ctx.restore();
-      },
-      afterDraw: (chart) => {
-        const ctx = chart.ctx;
-        const xAxis = chart.scales.x;
-        const yAxis = chart.scales.y;
-        if (window.currentTime !== undefined) {
-          const xPixel = xAxis.getPixelForValue(window.currentTime);
-          ctx.save();
+        ctx.save();
+        // Background zones matching textbook
+        // Arteriole Zone (Pinkish)
+        ctx.fillStyle = 'rgba(254, 226, 226, 0.4)';
+        ctx.fillRect(xAxis.getPixelForValue(0), yAxis.top, xAxis.getPixelForValue(25) - xAxis.getPixelForValue(0), yAxis.bottom - yAxis.top);
+        
+        // Capillary Zone (Purplish)
+        ctx.fillStyle = 'rgba(243, 232, 255, 0.4)';
+        ctx.fillRect(xAxis.getPixelForValue(25), yAxis.top, xAxis.getPixelForValue(75) - xAxis.getPixelForValue(25), yAxis.bottom - yAxis.top);
+        
+        // Venule Zone (Blueish)
+        ctx.fillStyle = 'rgba(219, 234, 254, 0.4)';
+        ctx.fillRect(xAxis.getPixelForValue(75), yAxis.top, xAxis.getPixelForValue(100) - xAxis.getPixelForValue(75), yAxis.bottom - yAxis.top);
+        
+        // Tracking line
+        if (currentGlobalPos !== undefined) {
+          const xPixel = xAxis.getPixelForValue(currentGlobalPos);
           ctx.beginPath();
           ctx.moveTo(xPixel, yAxis.top);
           ctx.lineTo(xPixel, yAxis.bottom);
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#eab308'; // Yellow bold line
           ctx.stroke();
-          ctx.restore();
+          
+          // Draw a small dot on top
+          ctx.beginPath();
+          ctx.arc(xPixel, yAxis.top, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#eab308';
+          ctx.fill();
         }
+        ctx.restore();
       }
     };
 
-    const ctx = document.getElementById('pressureChart').getContext('2d');
-    Chart.defaults.font.size = 14;
+    const ctx = document.getElementById('dynamicsChart').getContext('2d');
+    Chart.defaults.font.size = 13;
+    Chart.defaults.font.family = 'sans-serif';
 
     const chart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: times,
+        labels: positions,
         datasets: [
           {
-            label: 'Alveolar Pressure',
-            data: alveolarData,
-            borderColor: '#b91c1c', 
-            borderWidth: 4,
+            label: '總橫切面面積 (cm²)',
+            data: areaData,
+            borderColor: '#10b981', // Green
+            backgroundColor: '#10b981',
+            borderWidth: 3,
             pointRadius: 0,
-            tension: 0.4
+            tension: 0.4,
+            yAxisID: 'y'
           },
           {
-            label: 'Intrapleural Pressure',
-            data: intrapleuralData,
-            borderColor: '#8b5cf6',
-            borderWidth: 4,
+            label: '血壓 (mm Hg)',
+            data: pressureData,
+            borderColor: '#1e293b', // Dark slate
+            backgroundColor: '#1e293b',
+            borderWidth: 3,
             pointRadius: 0,
-            tension: 0.4
+            tension: 0.2, // Less tension to show pulse clearly
+            yAxisID: 'y'
+          },
+          {
+            label: '血流速度 (cm s⁻¹)',
+            data: velocityData,
+            borderColor: '#ef4444', // Red
+            backgroundColor: '#ef4444',
+            borderWidth: 3,
+            pointRadius: 0,
+            tension: 0.4,
+            yAxisID: 'y'
           }
         ]
       },
@@ -191,202 +267,200 @@
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        interaction: { mode: 'index', intersect: false },
         scales: {
           x: {
-            type: 'linear', min: 0, max: 4,
-            title: { display: true, text: 'Time (s)', font: { weight: 'bold', size: 16 } }
+            type: 'linear', min: 0, max: 100,
+            title: { display: false },
+            ticks: { display: false },
+            grid: { display: false }
           },
           y: {
-            min: -10, max: 2,
-            title: { display: true, text: 'Pressure (mm Hg)', font: { weight: 'bold', size: 16 } }
+            min: 0, max: 100,
+            title: { display: true, text: '相對數值', font: { weight: 'bold' } },
+            ticks: { display: false } // Hide numbers to mimic textbook abstract representation
           }
         },
         plugins: {
-          legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' } } },
+          legend: { 
+            position: 'top', 
+            labels: { usePointStyle: true, boxWidth: 8, font: { weight: 'bold' } } 
+          },
           tooltip: {
-            titleFont: { size: 16 }, bodyFont: { size: 14 },
             callbacks: {
-              title: (ctx) => `Time: ${ctx[0].parsed.x.toFixed(2)} s`,
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} mm Hg`
+              title: () => '', // Hide X axis number
+              label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}`
             }
           }
         }
       },
-      plugins: [customBackgroundAndLinePlugin]
+      plugins: [dynamicBackgroundPlugin]
     });
 
-    // --- 3. Animation Logic & Particle System ---
-    let time = 0;
-    let isPlaying = true;
-    let lastUpdate = performance.now();
-    let animationId;
-    let particles = [];
-
-    const lungs = document.getElementById('lungs');
-    const diaphragm = document.getElementById('diaphragm');
-    const leftRib = document.getElementById('leftRib');
-    const rightRib = document.getElementById('rightRib');
-    const particlesGroup = document.getElementById('particlesGroup');
-    const timeDisplay = document.getElementById('timeDisplay');
-    const timeSlider = document.getElementById('timeSlider');
-    const phaseText = document.getElementById('phaseText');
+    // --- 3. Animation Logic (SVG Particles) ---
+    const rbcGroup = document.getElementById('rbcGroup');
+    const posSlider = document.getElementById('positionSlider');
+    const posLabel = document.getElementById('posLabel');
     const playBtn = document.getElementById('playBtn');
-    const resetBtn = document.getElementById('resetBtn');
 
-    function manageParticles(delta) {
-      const isInhaling = time < 2;
+    let isPlaying = true;
+    let particles = [];
+    let animationId;
+    let lastTime = performance.now();
+
+    // Generate specific paths for RBCs to follow
+    // Domain: X from 0 to 1000
+    // 0-200: Straight 
+    // 200-800: Spread out into capillaries
+    // 800-1000: Merge back
+    const paths = [
+      { id: 0, type: 'straight', y: 150 }, // Main center
+      { id: 1, type: 'curve', startY: 150, midY: 55, endY: 150 }, // Top outer
+      { id: 2, type: 'curve', startY: 150, midY: 90, endY: 150 }, // Top inner
+      { id: 3, type: 'curve', startY: 150, midY: 210, endY: 150 }, // Bottom inner
+      { id: 4, type: 'curve', startY: 150, midY: 245, endY: 150 }  // Bottom outer
+    ];
+
+    function createRBC() {
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      p.setAttribute("r", "5");
+      rbcGroup.appendChild(p);
       
-      if (isPlaying && Math.random() < 0.35) {
-        const p = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        p.setAttribute("r", "2.5");
-        p.setAttribute("fill", isInhaling ? "#3b82f6" : "#6b7280"); 
-        particlesGroup.appendChild(p);
+      const pathIdx = Math.floor(Math.random() * paths.length);
+      const startOffset = Math.random() * 20; // Slight stagger
 
-        particles.push({
-          el: p,
-          progress: 0,
-          side: Math.random() > 0.5 ? 1 : -1,
-          isInhaling: isInhaling,
-          speed: 0.6 + Math.random() * 0.4 
-        });
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        p.progress += delta * p.speed * 1.5;
-
-        if (p.progress >= 1) {
-          p.el.remove();
-          particles.splice(i, 1);
-          continue;
-        }
-
-        let x, y, opacity;
-        let actualProgress = p.isInhaling ? p.progress : (1 - p.progress);
-
-        if (actualProgress < 0.6) {
-          let t = actualProgress / 0.6; 
-          x = 100 + (Math.random() * 6 - 3);
-          y = 15 + t * 65;
-          
-          if (p.isInhaling) {
-            opacity = t < 0.2 ? t * 5 : 1;
-          } else {
-            opacity = t < 0.2 ? t * 5 : 1;
-          }
-        } else {
-          let t = (actualProgress - 0.6) / 0.4; 
-          x = 100 + (t * 30 * p.side) + (Math.random() * 6 - 3);
-          y = 80 + (t * 35);
-          
-          if (p.isInhaling) {
-            opacity = 1 - t;
-          } else {
-            opacity = t;
-          }
-        }
-
-        p.el.setAttribute("cx", x);
-        p.el.setAttribute("cy", y);
-        p.el.setAttribute("opacity", Math.max(0, Math.min(1, opacity)));
-      }
+      particles.push({
+        el: p,
+        x: -startOffset,
+        path: paths[pathIdx],
+        baseSpeed: 100 + Math.random() * 20 // Pixels per second base
+      });
     }
 
-    function updateSimulation() {
-      const volumeFactor = (1 - Math.cos((Math.PI * time) / 2)) / 2;
-      
-      const lungScaleX = 1 + 0.25 * volumeFactor;
-      const lungScaleY = 1 + 0.15 * volumeFactor;
-      
-      const totalRibWidth = 154 + 30 * volumeFactor;
-      const halfRibWidth = totalRibWidth / 2;
-      const ribLeftX = 100 - halfRibWidth;
-      const ribRightX = 100 + halfRibWidth;
-      const ribTopY = 55 - 15 * volumeFactor;
-      const ribBottomY = 195 - 5 * volumeFactor;
-      const cornerRadius = 40;
-      
-      const diaphragmBaseY = 193;
-      const diaphragmCurveY = 171 + 34 * volumeFactor;
-
-      lungs.style.transform = `scale(${lungScaleX}, ${lungScaleY})`;
-      diaphragm.setAttribute('d', `M ${100 - halfRibWidth + 6} ${diaphragmBaseY} Q 100 ${diaphragmCurveY} ${100 + halfRibWidth - 6} ${diaphragmBaseY}`);
-      leftRib.setAttribute('d', `M ${ribLeftX} ${ribBottomY} L ${ribLeftX} ${ribTopY + cornerRadius} Q ${ribLeftX} ${ribTopY} ${ribLeftX + cornerRadius} ${ribTopY}`);
-      rightRib.setAttribute('d', `M ${ribRightX} ${ribBottomY} L ${ribRightX} ${ribTopY + cornerRadius} Q ${ribRightX} ${ribTopY} ${ribRightX - cornerRadius} ${ribTopY}`);
-
-      timeDisplay.innerText = `Time: ${time.toFixed(2)}s`;
-      timeSlider.value = time;
-
-      if (time < 2) {
-        phaseText.innerText = 'Inhalation';
-        phaseText.className = 'text-3xl font-extrabold mb-6 text-blue-600';
-      } else {
-        phaseText.innerText = 'Exhalation';
-        phaseText.className = 'text-3xl font-extrabold mb-6 text-red-600';
-      }
-
-      window.currentTime = time;
-      chart.update('none'); 
+    // Initialize with some particles
+    for(let i=0; i<30; i++) {
+      createRBC();
+      particles[i].x = Math.random() * 1000; // Scatter them initially
     }
 
     function animate(now) {
-      if (!isPlaying) return;
-      const delta = (now - lastUpdate) / 1000;
-      lastUpdate = now;
-      
-      time += delta;
-      if (time >= 4) time = 0;
-      
-      updateSimulation();
-      manageParticles(delta);
+      if (!isPlaying) {
+        lastTime = now;
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+
+      const delta = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Track the average X position of all active particles to sync the chart
+      let totalX = 0;
+      let activeCount = 0;
+
+      // Add new particles occasionally
+      if (Math.random() < 0.1) createRBC();
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        
+        // Calculate speed based on position (X axis mapping)
+        // 0-250 (Arteriole): Fast
+        // 250-750 (Capillary): VERY SLOW
+        // 750-1000 (Venule): Medium fast
+        let speedMultiplier = 1;
+        
+        if (p.x < 250) {
+          speedMultiplier = 1.2;
+          p.el.setAttribute("fill", "#dc2626"); // Oxygenated Red
+        } else if (p.x >= 250 && p.x <= 750) {
+          // Slow down drastically in the middle
+          // Peak slowness at x=500
+          let distFromCenter = Math.abs(p.x - 500);
+          speedMultiplier = 0.15 + (distFromCenter / 250) * 0.4;
+          
+          // Color transition (Red -> Purple -> Blue)
+          let colorProgress = (p.x - 250) / 500;
+          let r = Math.round(220 * (1 - colorProgress) + 59 * colorProgress);
+          let g = Math.round(38 * (1 - colorProgress) + 130 * colorProgress);
+          let b = Math.round(38 * (1 - colorProgress) + 246 * colorProgress);
+          p.el.setAttribute("fill", `rgb(${r},${g},${b})`);
+        } else {
+          speedMultiplier = 0.8;
+          p.el.setAttribute("fill", "#3b82f6"); // Deoxygenated Blue
+        }
+
+        // Apply movement
+        p.x += p.baseSpeed * speedMultiplier * delta;
+
+        // Calculate Y position based on path
+        let currentY = p.path.y || 150;
+        if (p.path.type === 'curve') {
+          if (p.x >= 200 && p.x <= 800) {
+            // Sine wave interpolation for smooth spread and merge
+            let progress = (p.x - 200) / 600; // 0 to 1
+            let curveFactor = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+            currentY = 150 + (p.path.midY - 150) * curveFactor;
+          }
+        }
+
+        // Add slight wobble
+        currentY += Math.sin(p.x / 10) * 2;
+
+        p.el.setAttribute("cx", p.x);
+        p.el.setAttribute("cy", currentY);
+
+        if (p.x > 0 && p.x <= 1000) {
+          totalX += p.x;
+          activeCount++;
+        }
+
+        // Remove if off screen
+        if (p.x > 1050) {
+          p.el.remove();
+          particles.splice(i, 1);
+        }
+      }
+
+      // Automatically update the chart tracking line based on average particle flow
+      if (!isDraggingSlider && activeCount > 0) {
+        // We calculate an "average front" or just pulse a line across
+        // To make it more interactive for the user, let's automate a scanning line instead of average
+        currentGlobalPos += 15 * delta; // scans across 0-100
+        if (currentGlobalPos > 100) currentGlobalPos = 0;
+        
+        posSlider.value = currentGlobalPos;
+        posLabel.innerText = `位置：${currentGlobalPos.toFixed(1)}%`;
+        chart.update('none');
+      }
+
       animationId = requestAnimationFrame(animate);
     }
 
-    // --- 4. Event Listeners ---
+    // --- 4. Interactions ---
+    let isDraggingSlider = false;
+
+    posSlider.addEventListener('mousedown', () => isDraggingSlider = true);
+    posSlider.addEventListener('touchstart', () => isDraggingSlider = true);
+    
+    posSlider.addEventListener('input', (e) => {
+      currentGlobalPos = parseFloat(e.target.value);
+      posLabel.innerText = `位置：${currentGlobalPos.toFixed(1)}%`;
+      chart.update('none');
+    });
+
+    posSlider.addEventListener('mouseup', () => isDraggingSlider = false);
+    posSlider.addEventListener('touchend', () => isDraggingSlider = false);
+
     playBtn.addEventListener('click', () => {
       isPlaying = !isPlaying;
-      playBtn.innerText = isPlaying ? '⏸' : '▶';
-      if (isPlaying) {
-        lastUpdate = performance.now();
-        animationId = requestAnimationFrame(animate);
-      } else {
-        cancelAnimationFrame(animationId);
+      playBtn.innerHTML = isPlaying ? '<span class="mr-2">⏸</span> 暫停 / 播放' : '<span class="mr-2">▶️</span> 暫停 / 播放';
+      if(isPlaying) {
+        lastTime = performance.now();
       }
     });
 
-    resetBtn.addEventListener('click', () => {
-      time = 0;
-      isPlaying = false;
-      playBtn.innerText = '▶';
-      
-      particlesGroup.innerHTML = '';
-      particles = [];
-
-      cancelAnimationFrame(animationId);
-      updateSimulation();
-    });
-
-    timeSlider.addEventListener('input', (e) => {
-      time = parseFloat(e.target.value);
-      isPlaying = false;
-      playBtn.innerText = '▶';
-      
-      particlesGroup.innerHTML = '';
-      particles = [];
-
-      cancelAnimationFrame(animationId);
-      updateSimulation();
-    });
-
-    // Spacebar shortcut
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
-        e.preventDefault(); 
-        playBtn.click(); 
-      }
-    });
-
-    lastUpdate = performance.now();
+    // Start
+    lastTime = performance.now();
     animationId = requestAnimationFrame(animate);
 
   </script>
