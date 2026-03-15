@@ -4,8 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HKDSE 生物科：血液循環導航圖 (Parallel Circuit Edition)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* --- 1. Standard CSS for the Back Button --- */
+        .back-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background-color: #e5e7eb; /* Light Gray */
+            color: #1f2937; /* Dark Gray Text */
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background-color: #d1d5db;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .back-btn:active {
+            transform: translateY(0);
+        }
+
+        /* --- 2. Existing Page Styles --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f4f8;
@@ -19,7 +51,7 @@
         h1 {
             color: #b51a1a; text-align: center; border-bottom: 2px solid #b51a1a;
             padding-bottom: 10px; margin-bottom: 20px; width: 100%; max-width: 1200px;
-            font-size: 1.875rem; font-weight: 700; /* Matching Tailwind text-3xl */
+            margin-top: 40px; /* Space for the fixed button */
         }
         .main-container {
             display: flex; flex-wrap: wrap; gap: 20px; max-width: 1500px;
@@ -80,7 +112,6 @@
         .stat-down { color: #3498db; font-weight: bold; }
         .stat-neutral { color: #f39c12; font-weight: bold; }
         
-        /* Map Styles */
         #svg-map {
             width: 100%; height: auto; max-height: 800px;
             background-color: #ffffff; border-radius: 8px;
@@ -112,17 +143,15 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-gray-800">
+<body>
 
-    <button onclick="window.location.href='index.html'" 
-            style="position:fixed; top:10px; left:10px; z-index:1000;" 
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded shadow">
+    <a href="index.html" class="back-btn">
         ⬅ 返回實驗室
-    </button>
+    </a>
 
-    <h1 class="text-3xl font-bold">HKDSE 生物科：血液循環導航圖</h1>
+    <h1>HKDSE 生物科：血液循環導航圖</h1>
     
-    <div class="main-container mt-4">
+    <div class="main-container">
         <div class="control-panel">
             <h2 class="section-title">🗺️ 導航設定</h2>
             <div class="input-group">
@@ -156,7 +185,6 @@
     </div>
 
     <script>
-        // ... (All your original Circulation JS logic remains the same)
         const nodes = {
             "頭部與手臂": {x: 250, y: 60, w: 120, h: 40, type: 'organ', bg: '<path d="M-20,15 C-20,0 20,0 20,15 Z M0,5 C-15,-15 15,-15 0,5 Z" fill="#bdc3c7" opacity="0.5" transform="scale(2.0)" />'},
             "肺": {x: 250, y: 150, w: 120, h: 40, type: 'organ', bg: '<path d="M-25,15 C-40,-5 -15,-25 -5,-10 C-5,-5 -15,10 -25,15 Z M25,15 C40,-5 15,-25 5,-10 C5,-5 15,10 25,15 Z" fill="#ff7675" opacity="0.4" transform="scale(2.0)" />'},
@@ -168,8 +196,7 @@
             "小腸": {x: 250, y: 520, w: 120, h: 40, type: 'organ', bg: '<rect x="-35" y="-15" width="70" height="30" rx="10" fill="#f39c12" opacity="0.3" transform="scale(1.7)"/><path d="M-30,0 Q-15,-15 0,0 T30,0" fill="none" stroke="#e67e22" stroke-width="4" opacity="0.5" transform="scale(1.7)"/>'},
             "腎": {x: 250, y: 610, w: 120, h: 40, type: 'organ', bg: '<path d="M-20,-10 C-30,-20 -30,20 -20,10 C-10,15 -10,-15 -20,-10 Z M20,-10 C30,-20 30,20 20,10 C10,15 10,-15 20,-10 Z" fill="#8e44ad" opacity="0.4" transform="scale(1.8)" />'},
             "身體部位": {x: 250, y: 700, w: 120, h: 40, type: 'organ', bg: '<rect x="-20" y="-15" width="12" height="40" rx="5" fill="#bdc3c7" opacity="0.5" transform="scale(1.7)"/><rect x="8" y="-15" width="12" height="40" rx="5" fill="#bdc3c7" opacity="0.5" transform="scale(1.7)"/>'},
-            "肺動脈樞紐": { type: 'hub' }, 
-            "A_頭": { type: 'hub' }, "A_心": { type: 'hub' }, "A_肝": { type: 'hub' }, "A_腸": { type: 'hub' }, "A_腎": { type: 'hub' }, "A_身": { type: 'hub' },
+            "肺動脈樞紐": { type: 'hub' }, "A_頭": { type: 'hub' }, "A_心": { type: 'hub' }, "A_肝": { type: 'hub' }, "A_腸": { type: 'hub' }, "A_腎": { type: 'hub' }, "A_身": { type: 'hub' },
             "V_頭": { type: 'hub' }, "V_心": { type: 'hub' }, "V_肝": { type: 'hub' }, "V_腎": { type: 'hub' }, "V_身": { type: 'hub' }
         };
 
@@ -229,7 +256,6 @@
         function drawMap() {
             const svg = document.getElementById('svg-map');
             let linesHTML = '', hitboxHTML = '', bgHTML = '', boxHTML = '';
-
             edges.forEach(edge => {
                 const d = edge.path.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(' ');
                 linesHTML += `<path d="${d}" class="vessel-path ${edge.type}" />`;
@@ -238,9 +264,7 @@
                         onmousemove="showTooltip(event, '${edge.vessel}')" onmouseout="hideTooltip()"/>`;
                 }
             });
-
             bgHTML += `<path d="M250,350 C160,280 190,210 250,250 C310,210 340,280 250,350 Z" fill="#e74c3c" opacity="0.15" />`;
-
             for (let name in nodes) {
                 if (nodes[name].type !== 'hub') {
                     const c = nodes[name];
@@ -250,14 +274,11 @@
                                 <text x="${c.x}" y="${c.y + 5}" text-anchor="middle">${name}</text>`;
                 }
             }
-            
             const vesselLabelsHTML = `
                 <text x="395" y="180" class="vessel-label" transform="rotate(90, 395, 180)">大動脈 (Aorta)</text>
                 <text x="35" y="580" class="vessel-label vein" transform="rotate(-90, 35, 580)">腔靜脈 (Vena Cava)</text>
             `;
-
             const rbcMarkerHTML = `<circle id="rbc-marker" cx="0" cy="0" r="7" fill="#e74c3c" stroke="white" stroke-width="2" style="display:none; filter: drop-shadow(0 0 6px rgba(231,76,60,0.9)); z-index: 100;"></circle>`;
-
             svg.innerHTML = linesHTML + hitboxHTML + bgHTML + boxHTML + vesselLabelsHTML + rbcMarkerHTML;
         }
 
@@ -268,7 +289,6 @@
             tooltip.style.left = (e.clientX - rect.left) + 'px';
             tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
         }
-
         function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
 
         function findEdgePath(start, end) {
@@ -324,7 +344,6 @@
                 for (let i = 1; i < fullPath.length; i++) {
                     let step = fullPath[i];
                     let currentVessel = step.edge.vessel;
-                    
                     if (currentVessel && currentVessel !== prevVessel) {
                         if (currentVessel.includes("Aorta") || currentVessel === "大動脈 (Aorta)") {
                             htmlFormat += `<div class="path-step" style="border-left-color: #e74c3c; background-color: #fdf5f6; color: #c0392b;">${currentVessel}</div>`;
@@ -335,19 +354,15 @@
                         }
                         prevVessel = currentVessel;
                     }
-
                     if (nodes[step.node].type !== 'hub') {
                         let borderColor = step.edge.type === 'oxygenated' ? '#ff7675' : 
                                           (step.edge.type === 'portal' ? '#a29bfe' : '#74b9ff');
-                        
                         htmlFormat += `<div class="path-step" style="border-left-color: ${borderColor};">${step.node}</div>`;
-                        
                         if (organChanges[step.node]) {
                             changesFormat += `<div class="change-card" style="border-left-color: ${borderColor};"><strong>🩸 經過 [${step.node}] 後：</strong>${organChanges[step.node]}</div>`;
                             organsVisited++;
                         }
                     }
-
                     step.edge.path.forEach(point => {
                         if (allPoints.length === 0) allPoints.push(point);
                         else {
@@ -383,7 +398,6 @@
                 currentAnimation.onfinish = function() {
                     marker.style.display = 'none'; animBtn.style.display = 'none';
                 };
-
             } else {
                 routeOutput.innerHTML = `<p style="color: red; text-align: center;">無法找到路線！</p>`;
             }
