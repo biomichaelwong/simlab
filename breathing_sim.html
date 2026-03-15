@@ -1,46 +1,329 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Breathing Simulation</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f8ff;
-        }
-        .container {
-            text-align: center;
-        }
-        .breathing-box {
-            width: 200px;
-            height: 200px;
-            background-color: #e0f7fa;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            animation: breathe 4s ease-in-out infinite;
-        }
-        @keyframes breathe {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breathing Simulator (DSE Biology)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <div class="container">
-        <div class="breathing-box">
-            Breathe In
-        </div>
+<body class="bg-gray-100 p-4 font-sans text-gray-800">
+
+  <div class="w-full max-w-7xl mx-auto bg-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
+    <div class="mb-6 text-center">
+      <h1 class="text-3xl font-bold text-gray-800">香港中學文憑生物科：換氣機制</h1>
+      <p class="text-lg text-gray-600 mt-2">肺部及胸腔壓力變化的互動模擬</p>
     </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col items-center justify-center">
+        <h2 class="text-2xl font-bold mb-3 text-gray-700">胸腔模型</h2>
+        <div id="phaseText" class="text-3xl font-extrabold mb-6 text-blue-600">吸氣 (Inhalation)</div>
+
+        <div class="relative w-full aspect-square max-w-lg bg-blue-50 rounded-xl overflow-hidden border-2 border-blue-100 flex justify-center items-center">
+          <svg viewBox="0 0 200 252" class="w-full h-full p-2">
+            <path d="M 91 18 L 91 80 L 109 80 L 109 18 Z" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2" />
+            <path d="M 91 80 L 66 107 L 75 112 L 100 86 Z" fill="#cbd5e1" />
+            <path d="M 109 80 L 134 107 L 125 112 L 100 86 Z" fill="#cbd5e1" />
+
+            <g id="lungs" style="transform-origin: 100px 80px; transition: transform 0.1s linear;">
+              <path d="M 95 85 C 66 85, 46 112, 52 150 C 58 168, 84 163, 95 149 Z" fill="#fca5a5" opacity="0.9" />
+              <path d="M 105 85 C 134 85, 154 112, 148 150 C 142 168, 116 163, 105 149 Z" fill="#fca5a5" opacity="0.9" />
+            </g>
+            <text x="100" y="126" text-anchor="middle" font-size="16" font-weight="bold" fill="#7f1d1d" opacity="0.8">肺部</text>
+
+            <path id="diaphragm" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round" style="transition: all 0.1s linear;" />
+            <text x="100" y="235" text-anchor="middle" font-size="14" font-weight="bold" fill="#ef4444">橫膈膜</text>
+
+            <path id="leftRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
+            <path id="rightRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col">
+        <h2 class="text-2xl font-bold mb-4 text-gray-700 text-center">壓力隨時間的變化</h2>
+        
+        <div class="relative w-full flex-grow min-h-[480px] mb-4">
+          <canvas id="pressureChart"></canvas>
+        </div>
+
+        <div class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner space-y-3">
+          <div class="flex items-center justify-center space-x-4">
+            <button id="playBtn" title="按空白鍵 (Space) 播放/暫停" class="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-md text-xl pb-1">
+              ⏸
+            </button>
+            <button id="resetBtn" title="重設" class="flex items-center justify-center w-10 h-10 bg-gray-300 text-gray-700 rounded-full hover:bg-gray-400 transition shadow-md text-lg pb-1">
+              ↺
+            </button>
+          </div>
+          
+          <div class="w-full px-4">
+            <div class="flex justify-between text-sm text-gray-600 font-bold mb-1">
+              <span>0秒</span>
+              <span id="timeDisplay" class="text-base text-blue-800">時間：0.00秒</span>
+              <span>4秒</span>
+            </div>
+            <input id="timeSlider" type="range" min="0" max="4" step="0.01" value="0" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 bg-yellow-50 p-6 rounded-lg border border-yellow-300 text-gray-800 shadow-sm">
+      <h3 class="font-bold text-xl mb-4 flex items-center text-yellow-900">
+        <span class="bg-yellow-400 text-yellow-900 w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-lg">!</span>
+        DSE 關鍵概念筆記：
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-base leading-relaxed">
+        <div>
+          <h4 class="font-bold text-purple-700 mb-2 text-lg">1. 胸膜腔內壓（紫線）</h4>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>它<strong class="text-black">總是負值</strong>（低於大氣壓力）。這種輕微的真空狀態使肺部緊貼胸壁，防止肺部塌陷。</li>
+            <li>在吸氣期間，隨著胸腔擴張，胸膜腔內壓會<strong class="text-black">進一步下降</strong>（從 –4 降至 –8 毫米汞柱）。</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-blue-700 mb-2 text-lg">2. 事件順序（吸氣）</h4>
+          <ol class="list-decimal pl-6 space-y-2">
+            <li>肋間肌和橫膈膜肌肉<strong class="text-black">收縮</strong>。</li>
+            <li>肋骨<strong class="text-black">向上及向外移</strong>，同時橫膈膜變得平坦，使胸腔<strong class="text-black">體積增加</strong>。</li>
+            <li>胸膜腔內壓下降，將肺部向外拉。</li>
+            <li>肺部<strong class="text-black">體積增加</strong>。</li>
+            <li>肺泡壓力降至<strong class="text-black">低於大氣壓力</strong>（藍線跌破 0）。</li>
+            <li>空氣順著壓力梯度被吸入肺部。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Generate Data ---
+    const times = [];
+    const alveolarData = [];
+    const intrapleuralData = [];
+    
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 10;
+      times.push(t);
+      alveolarData.push(-1.5 * Math.sin((Math.PI * t) / 2));
+      intrapleuralData.push(-6 + 2 * Math.cos((Math.PI * t) / 2));
+    }
+
+    window.currentTime = 0;
+
+    // --- 2. Setup Chart.js ---
+    const customBackgroundAndLinePlugin = {
+      id: 'customBackgroundAndLine',
+      beforeDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        ctx.save();
+        // Inhalation background (Blue)
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.06)';
+        ctx.fillRect(xAxis.getPixelForValue(0), yAxis.top, xAxis.getPixelForValue(2) - xAxis.getPixelForValue(0), yAxis.bottom - yAxis.top);
+        // Exhalation background (Red)
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+        ctx.fillRect(xAxis.getPixelForValue(2), yAxis.top, xAxis.getPixelForValue(4) - xAxis.getPixelForValue(2), yAxis.bottom - yAxis.top);
+        
+        // Atmospheric Pressure Line (0)
+        const zeroY = yAxis.getPixelForValue(0);
+        ctx.beginPath();
+        ctx.moveTo(xAxis.left, zeroY);
+        ctx.lineTo(xAxis.right, zeroY);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#9ca3af';
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.restore();
+      },
+      afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        if (window.currentTime !== undefined) {
+          const xPixel = xAxis.getPixelForValue(window.currentTime);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(xPixel, yAxis.top);
+          ctx.lineTo(xPixel, yAxis.bottom);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#f59e0b';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    };
+
+    const ctx = document.getElementById('pressureChart').getContext('2d');
+    
+    Chart.defaults.font.size = 14;
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: times,
+        datasets: [
+          {
+            label: '肺泡壓力 (Alveolar Pressure)',
+            data: alveolarData,
+            borderColor: '#2563eb', // Changed to blue
+            borderWidth: 4,
+            pointRadius: 0,
+            tension: 0.4
+          },
+          {
+            label: '胸膜腔內壓 (Intrapleural Pressure)',
+            data: intrapleuralData,
+            borderColor: '#8b5cf6',
+            borderWidth: 4,
+            pointRadius: 0,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: {
+            type: 'linear',
+            min: 0,
+            max: 4,
+            title: { display: true, text: '時間 (秒)', font: { weight: 'bold', size: 16 } }
+          },
+          y: {
+            min: -10,
+            max: 2,
+            title: { display: true, text: '壓力 (毫米汞柱 mm Hg)', font: { weight: 'bold', size: 16 } }
+          }
+        },
+        plugins: {
+          legend: { 
+            position: 'top',
+            labels: { font: { size: 14, weight: 'bold' } }
+          },
+          tooltip: {
+            titleFont: { size: 16 },
+            bodyFont: { size: 14 },
+            callbacks: {
+              title: (ctx) => `時間：${ctx[0].parsed.x.toFixed(2)} 秒`,
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} mm Hg`
+            }
+          }
+        }
+      },
+      plugins: [customBackgroundAndLinePlugin]
+    });
+
+    // --- 3. Animation Logic ---
+    let time = 0;
+    let isPlaying = true;
+    let lastUpdate = performance.now();
+    let animationId;
+
+    const lungs = document.getElementById('lungs');
+    const diaphragm = document.getElementById('diaphragm');
+    const leftRib = document.getElementById('leftRib');
+    const rightRib = document.getElementById('rightRib');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const timeSlider = document.getElementById('timeSlider');
+    const phaseText = document.getElementById('phaseText');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function updateSimulation() {
+      const volumeFactor = (1 - Math.cos((Math.PI * time) / 2)) / 2;
+      
+      const lungScaleX = 1 + 0.25 * volumeFactor;
+      const lungScaleY = 1 + 0.15 * volumeFactor;
+      
+      const totalRibWidth = 154 + 30 * volumeFactor;
+      const halfRibWidth = totalRibWidth / 2;
+      const ribLeftX = 100 - halfRibWidth;
+      const ribRightX = 100 + halfRibWidth;
+      const ribTopY = 55 - 15 * volumeFactor;
+      const ribBottomY = 195 - 5 * volumeFactor;
+      const cornerRadius = 40;
+      
+      const diaphragmBaseY = 193;
+      const diaphragmCurveY = 171 + 34 * volumeFactor;
+
+      lungs.style.transform = `scale(${lungScaleX}, ${lungScaleY})`;
+      diaphragm.setAttribute('d', `M ${100 - halfRibWidth + 6} ${diaphragmBaseY} Q 100 ${diaphragmCurveY} ${100 + halfRibWidth - 6} ${diaphragmBaseY}`);
+      leftRib.setAttribute('d', `M ${ribLeftX} ${ribBottomY} L ${ribLeftX} ${ribTopY + cornerRadius} Q ${ribLeftX} ${ribTopY} ${ribLeftX + cornerRadius} ${ribTopY}`);
+      rightRib.setAttribute('d', `M ${ribRightX} ${ribBottomY} L ${ribRightX} ${ribTopY + cornerRadius} Q ${ribRightX} ${ribTopY} ${ribRightX - cornerRadius} ${ribTopY}`);
+
+      timeDisplay.innerText = `時間：${time.toFixed(2)}秒`;
+      timeSlider.value = time;
+
+      if (time < 2) {
+        phaseText.innerText = '吸氣 (Inhalation)';
+        phaseText.className = 'text-3xl font-extrabold mb-6 text-blue-600';
+      } else {
+        phaseText.innerText = '呼氣 (Exhalation)';
+        phaseText.className = 'text-3xl font-extrabold mb-6 text-red-600';
+      }
+
+      window.currentTime = time;
+      chart.update('none'); 
+    }
+
+    function animate(now) {
+      if (!isPlaying) return;
+      const delta = (now - lastUpdate) / 1000;
+      lastUpdate = now;
+      
+      time += delta;
+      if (time >= 4) time = 0;
+      
+      updateSimulation();
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // --- 4. Event Listeners ---
+    playBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playBtn.innerText = isPlaying ? '⏸' : '▶';
+      if (isPlaying) {
+        lastUpdate = performance.now();
+        animationId = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(animationId);
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      time = 0;
+      isPlaying = false;
+      playBtn.innerText = '▶';
+      cancelAnimationFrame(animationId);
+      updateSimulation();
+    });
+
+    timeSlider.addEventListener('input', (e) => {
+      time = parseFloat(e.target.value);
+      isPlaying = false;
+      playBtn.innerText = '▶';
+      cancelAnimationFrame(animationId);
+      updateSimulation();
+    });
+
+    // Spacebar shortcut to play/pause
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault(); 
+        playBtn.click(); 
+      }
+    });
+
+    lastUpdate = performance.now();
+    animationId = requestAnimationFrame(animate);
+
+  </script>
 </body>
 </html>
