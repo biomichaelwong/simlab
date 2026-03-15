@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioSim Interactive Lab</title>
+    <title>BioSim Lab Dashboard</title>
     <style>
         :root {
             --primary: #00ff88; 
@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -23,20 +23,22 @@
             min-height: 100vh;
         }
 
-        /* Language Switcher Button Style */
+        /* Top Right Language Toggle */
         .lang-switch {
             position: fixed;
             top: 20px;
             right: 20px;
             background: var(--card-bg);
-            border: 1px solid var(--primary);
+            border: 2px solid var(--primary);
             color: var(--primary);
-            padding: 10px 20px;
-            border-radius: 30px;
+            padding: 12px 24px;
+            border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 1rem;
             z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+            transition: 0.3s;
         }
 
         .lang-switch:hover {
@@ -44,139 +46,115 @@
             color: var(--bg);
         }
 
-        header {
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
+        header { padding: 50px 20px; text-align: center; }
+        h1 { font-size: 2.8rem; text-transform: uppercase; border-bottom: 4px solid var(--primary); padding-bottom: 10px; }
 
         .container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
             width: 90%;
             max-width: 1200px;
-            padding: 20px;
+            padding-bottom: 50px;
         }
 
         .sim-card {
             background: var(--card-bg);
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
             text-decoration: none;
             color: var(--text);
             text-align: center;
-            transition: all 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: 0.3s;
         }
 
         .sim-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-8px);
             border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        .sim-card h3 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: var(--primary);
-        }
-
-        .sim-card p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 10px;
-        }
-
-        .badge {
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--primary);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            align-self: center;
-            margin-bottom: 15px;
-        }
+        .badge { color: var(--primary); font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 10px; }
+        h3 { margin: 10px 0; font-size: 1.5rem; }
+        p { opacity: 0.7; font-size: 0.9rem; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <button class="lang-switch" onclick="toggleLanguage()" id="langBtn">切换至中文</button>
+    <button class="lang-switch" onclick="toggleLanguage()" id="langBtn">中文版</button>
 
     <header>
-        <h1 id="mainTitle">Virtual Biology Pavilion</h1>
-        <p id="subTitle">Interactive Human Systems Simulations</p>
+        <h1 id="mainTitle">Biology Lab Pavilion</h1>
+        <p id="subTitle">Select a simulation to begin</p>
     </header>
 
-    <div class="container">
-        <a href="breathing_sim.html" class="sim-card">
+    <div class="container" id="grid">
+        <a href="breathing_en.html" class="sim-card" id="card1">
             <span class="badge" data-key="cat1">RESPIRATORY</span>
-            <h3 data-key="title1">Lung Mechanics</h3>
-            <p data-key="desc1">Visualizing diaphragm movement and Boyle's Law.</p>
+            <h3 data-key="title1">Breathing Mechanics</h3>
+            <p data-key="desc1">Visualizing lung pressure and diaphragm movement.</p>
         </a>
 
-        <a href="heart_sim.html" class="sim-card">
+        <a href="heart_en.html" class="sim-card" id="card2">
             <span class="badge" data-key="cat2">CIRCULATORY</span>
-            <h3 data-key="title2">Cardiac Rhythm</h3>
-            <p data-key="desc2">Simulating electrical impulses and valve timing.</p>
+            <h3 data-key="title2">Heart Rate</h3>
+            <p data-key="desc2">Simulating pulse and blood flow dynamics.</p>
         </a>
 
-        <a href="neuro_sim.html" class="sim-card">
-            <span class="badge" data-key="cat3">NERVOUS SYSTEM</span>
-            <h3 data-key="title3">Synaptic Fire</h3>
-            <p data-key="desc3">Action potentials and neurotransmitter flow.</p>
-        </a>
-    </div>
+        </div>
 
     <script>
-        const langData = {
+        const translations = {
             en: {
-                btn: "切换至中文",
-                mainTitle: "Virtual Biology Pavilion",
-                subTitle: "Interactive Human Systems Simulations",
-                cat1: "RESPIRATORY", title1: "Lung Mechanics", desc1: "Visualizing diaphragm movement and Boyle's Law.",
-                cat2: "CIRCULATORY", title2: "Cardiac Rhythm", desc2: "Simulating electrical impulses and valve timing.",
-                cat3: "NERVOUS SYSTEM", title3: "Synaptic Fire", desc3: "Action potentials and neurotransmitter flow."
+                btn: "中文版",
+                mainTitle: "Biology Lab Pavilion",
+                subTitle: "Select a simulation to begin",
+                cat1: "RESPIRATORY", title1: "Breathing Mechanics", desc1: "Visualizing lung pressure and diaphragm movement.",
+                cat2: "CIRCULATORY", title2: "Heart Rate", desc2: "Simulating pulse and blood flow dynamics.",
+                suffix: "_en.html" // Link points to English files
             },
             cn: {
-                btn: "Switch to English",
-                mainTitle: "虚拟生物实验室",
-                subTitle: "交互式人体系统模拟",
-                cat1: "呼吸系统", title1: "肺部力学", desc1: "可视化膈肌运动和波义耳定律。",
-                cat2: "循环系统", title2: "心律模拟", desc2: "模拟电脉冲和心脏瓣膜定时。",
-                cat3: "神经系统", title3: "突触传递", desc3: "动作电位和神经递质流动。"
+                btn: "English Version",
+                mainTitle: "生物互动实验室",
+                subTitle: "请选择一个模拟程序开始学习",
+                cat1: "呼吸系统", title1: "呼吸力学", desc1: "可视化肺部压力和膈肌运动。",
+                cat2: "循环系统", title2: "心率模拟", desc2: "模拟脉搏和血流动力学。",
+                suffix: "_cn.html" // Link points to Chinese files
             }
         };
 
         let currentLang = 'en';
 
         function toggleLanguage() {
-            currentLang = currentLang === 'en' ? 'cn' : 'en';
-            
-            // Update static IDs
-            document.getElementById('langBtn').innerText = langData[currentLang].btn;
-            document.getElementById('mainTitle').innerText = langData[currentLang].mainTitle;
-            document.getElementById('subTitle').innerText = langData[currentLang].subTitle;
+            currentLang = (currentLang === 'en') ? 'cn' : 'en';
+            const data = translations[currentLang];
 
-            // Update all elements with data-key
+            // 1. Update Header Text
+            document.getElementById('langBtn').innerText = data.btn;
+            document.getElementById('mainTitle').innerText = data.mainTitle;
+            document.getElementById('subTitle').innerText = data.subTitle;
+
+            // 2. Update Card Text
             document.querySelectorAll('[data-key]').forEach(el => {
                 const key = el.getAttribute('data-key');
-                el.innerText = langData[currentLang][key];
+                el.innerText = data[key];
+            });
+
+            // 3. Update Links (The magic part!)
+            // Changes "breathing_en.html" to "breathing_cn.html"
+            updateLinks(currentLang);
+        }
+
+        function updateLinks(lang) {
+            const cards = document.querySelectorAll('.sim-card');
+            cards.forEach(card => {
+                let currentHref = card.getAttribute('href');
+                // Remove the old suffix and add the new one
+                let baseName = currentHref.split('_')[0]; 
+                card.setAttribute('href', baseName + translations[lang].suffix);
             });
         }
     </script>
-
 </body>
 </html>
