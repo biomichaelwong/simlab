@@ -1,1 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE Biology: Blood Circulation Navigator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #b51a1a; text-align: center; border-bottom: 2px solid #b51a1a;
+            padding-bottom: 10px; margin-bottom: 20px; width: 100%; max-width: 1200px;
+        }
+        .main-container {
+            display: flex; flex-wrap: wrap; gap: 20px; max-width: 1500px;
+            width: 100%; justify-content: center; align-items: stretch;
+        }
+        .control-panel, .info-panel {
+            background: white; padding: 25px; border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1); flex: 1;
+            min-width: 300px; max-width: 380px; display: flex; flex-direction: column;
+        }
+        .map-panel {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1); flex: 1.5;
+            min-width: 500px; display: flex; justify-content: center;
+            align-items: center; position: relative;
+        }
+        
+        .section-title { font-size: 1.2em; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; margin-top: 0; margin-bottom: 15px; font-weight: bold;}
+        
+        .input-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        label { font-weight: bold; margin-bottom: 5px; color: #2c3e50; }
+        select {
+            padding: 12px; border: 2px solid #e0e6ed; border-radius: 8px;
+            font-size: 16px; outline: none; transition: border-color 0.3s;
+        }
+        select:focus { border-color: #3498db; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button {
+            flex: 1; color: white; border: none; padding: 15px; font-size: 18px;
+            border-radius: 8px; cursor: pointer; transition: background 0.3s, transform 0.1s;
+            font-weight: bold;
+        }
+        #nav-btn { background-color: #e74c3c; }
+        #nav-btn:hover { background-color: #c0392b; }
+        #animation-btn { background-color: #f1c40f; }
+        #animation-btn:hover { background-color: #f39c12; }
+        button:active { transform: scale(0.98); }
+        
+        #route-output, #content-changes-output {
+            margin-top: 20px; padding: 15px; background-color: #f8f9fa;
+            border-radius: 8px; border: 1px solid #e0e6ed; flex-grow: 1; overflow-y: auto; max-height: 500px;
+        }
+        
+        .path-step {
+            display: block; background: white; padding: 10px 15px;
+            border-radius: 8px; margin: 8px 0; border-left: 5px solid #bdc3c7;
+            font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .vessel-text { color: #7f8c8d; font-size: 0.9em; margin-left: 20px; }
+        
+        .change-card {
+            background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;
+            border-left: 5px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 0.95em; line-height: 1.5;
+        }
+        .change-card strong { color: #2c3e50; display: block; margin-bottom: 5px; font-size: 1.05em; }
+        .stat-up { color: #e74c3c; font-weight: bold; }
+        .stat-down { color: #3498db; font-weight: bold; }
+        .stat-neutral { color: #f39c12; font-weight: bold; }
+        
+        /* Map Styles */
+        #svg-map {
+            width: 100%; height: auto; max-height: 800px;
+            background-color: #ffffff; border-radius: 8px;
+        }
+        .organ-node { fill: rgba(255,255,255,0.9); stroke: #555; stroke-width: 1.5; rx: 6; }
+        .heart-node { fill: #ffebee; stroke: #e74c3c; stroke-width: 2; rx: 6; }
+        .vessel-path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+        .vessel-hitbox { cursor: pointer; pointer-events: stroke; transition: stroke 0.2s; }
+        .vessel-hitbox:hover { stroke: rgba(241, 196, 15, 0.4); } 
+        
+        .oxygenated { stroke: #ff7675; }
+        .deoxygenated { stroke: #74b9ff; }
+        .portal { stroke: #a29bfe; }
+        
+        text { font-family: sans-serif; font-size: 15px; font-weight: bold; fill: #2d3436; pointer-events: none; }
+        .vessel-label { font-size: 14px; font-weight: bold; fill: #e74c3c; }
+        .vessel-label.vein { fill: #3498db; }
 
+        /* Tooltip Style */
+        #tooltip {
+            position: absolute; background: rgba(44, 62, 80, 0.95); color: white;
+            padding: 8px 14px; border-radius: 6px; font-size: 15px; font-weight: bold;
+            pointer-events: none; display: none; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translate(-50%, -100%); margin-top: -10px; white-space: nowrap;
+        }
+        #tooltip::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
+            border-width: 6px; border-style: solid;
+            border-color: rgba(44, 62, 80, 0.95) transparent transparent transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>HKDSE Biology: Blood Circulation Navigator</h1>
+    
+    <div class="main-container">
+        <div class="control-panel">
+            <h2 class="section-title">🗺️ Navigation Settings</h2>
+            <div class="input-group">
+                <label for="startNode">📍 Start:</label>
+                <select id="startNode"></select>
+            </div>
+            <div class="input-group">
+                <label for="endNode">🏁 End:</label>
+                <select id="endNode"></select>
+            </div>
+            <div class="btn-group">
+                <button id="nav-btn" onclick="startNavigation()">Start Navigation</button>
+                <button id="animation-btn" onclick="toggleAnimation()" style="display:none;">Pause</button>
+            </div>
+            <div id="route-output">
+                <div style="color: #7f8c8d; text-align: center; margin-top: 20px;">The route will be displayed here...</div>
+            </div>
+        </div>
+
+        <div class="map-panel" id="map-container">
+            <div id="tooltip">Vessel Name</div>
+            <svg id="svg-map" viewBox="0 0 500 800">
+                </svg>
+        </div>
+
+        <div class="info-panel">
+            <h2 class="section-title">🧪 Blood Composition</h2>
+            <div id="content-changes-output">
+                <div style="color: #7f8c8d; text-align: center; margin-top: 20px;">Select a route to view changes in blood composition across organs...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Circuit Nodes (Hubs handle the 90-degree parallel intersections)
+        const nodes = {
+            "Head & Arms": {x: 250, y: 60, w: 120, h: 40, type: 'organ', bg: '<path d="M-20,15 C-20,0 20,0 20,15 Z M0,5 C-15,-15 15,-15 0,5 Z" fill="#bdc3c7" opacity="0.5" transform="scale(2.0)" />'},
+            "Lungs": {x: 250, y: 150, w: 120, h: 40, type: 'organ', bg: '<path d="M-25,15 C-40,-5 -15,-25 -5,-10 C-5,-5 -15,10 -25,15 Z M25,15 C40,-5 15,-25 5,-10 C5,-5 15,10 25,15 Z" fill="#ff7675" opacity="0.4" transform="scale(2.0)" />'},
+            "Right Atrium": {x: 175, y: 250, w: 100, h: 40, type: 'heart'},
+            "Left Atrium": {x: 325, y: 250, w: 100, h: 40, type: 'heart'},
+            "Right Ventricle": {x: 175, y: 310, w: 100, h: 40, type: 'heart'},
+            "Left Ventricle": {x: 325, y: 310, w: 100, h: 40, type: 'heart'},
+            "Liver": {x: 250, y: 430, w: 120, h: 40, type: 'organ', bg: '<path d="M-35,-15 C10,-25 40,-5 35,5 C10,20 -30,15 -35,-15 Z" fill="#d35400" opacity="0.4" transform="scale(1.8)" />'},
+            "Small Intestine": {x: 250, y: 520, w: 130, h: 40, type: 'organ', bg: '<rect x="-35" y="-15" width="70" height="30" rx="10" fill="#f39c12" opacity="0.3" transform="scale(1.7)"/><path d="M-30,0 Q-15,-15 0,0 T30,0" fill="none" stroke="#e67e22" stroke-width="4" opacity="0.5" transform="scale(1.7)"/>'},
+            "Kidneys": {x: 250, y: 610, w: 120, h: 40, type: 'organ', bg: '<path d="M-20,-10 C-30,-20 -30,20 -20,10 C-10,15 -10,-15 -20,-10 Z M20,-10 C30,-20 30,20 20,10 C10,15 10,-15 20,-10 Z" fill="#8e44ad" opacity="0.4" transform="scale(1.8)" />'},
+            "Other Body Parts": {x: 250, y: 700, w: 140, h: 40, type: 'organ', bg: '<rect x="-20" y="-15" width="12" height="40" rx="5" fill="#bdc3c7" opacity="0.5" transform="scale(1.7)"/><rect x="8" y="-15" width="12" height="40" rx="5" fill="#bdc3c7" opacity="0.5" transform="scale(1.7)"/>'},
+
+            // Invisible circuit intersections
+            "Hub_Pulmonary": { type: 'hub' }, 
+            "A_Head": { type: 'hub' }, "A_Heart": { type: 'hub' }, "A_Liver": { type: 'hub' }, "A_Intestine": { type: 'hub' }, "A_Kidneys": { type: 'hub' }, "A_Body": { type: 'hub' },
+            "V_Head": { type: 'hub' }, "V_Heart": { type: 'hub' }, "V_Liver": { type: 'hub' }, "V_Kidneys": { type: 'hub' }, "V_Body": { type: 'hub' }
+        };
+
+        const organChanges = {
+            "Lungs": `• Oxygen (O₂): <span class="stat-up">Significantly increases ⬆️</span><br>• Carbon dioxide (CO₂): <span class="stat-down">Significantly decreases ⬇️</span>`,
+            "Small Intestine": `• Oxygen (O₂): <span class="stat-down">Decreases ⬇️</span><br>• Carbon dioxide (CO₂): <span class="stat-up">Increases ⬆️</span><br>• Nutrients: <span class="stat-up">Significantly increases ⬆️</span>`,
+            "Liver": `• Oxygen (O₂): <span class="stat-down">Decreases ⬇️</span><br>• Urea: <span class="stat-up">Increases ⬆️</span><br>• Glucose: <span class="stat-neutral">Stabilizes</span>`,
+            "Kidneys": `• Oxygen (O₂): <span class="stat-down">Decreases ⬇️</span><br>• Urea: <span class="stat-down">Significantly decreases ⬇️</span>`,
+            "Head & Arms": `• Oxygen (O₂): <span class="stat-down">Decreases ⬇️</span><br>• Carbon dioxide (CO₂): <span class="stat-up">Increases ⬆️</span>`,
+            "Other Body Parts": `• Oxygen (O₂): <span class="stat-down">Decreases ⬇️</span><br>• Carbon dioxide (CO₂): <span class="stat-up">Increases ⬆️</span>`
+        };
+
+        // Redesigned Edges for perfectly straight parallel lines
+        const edges = [
+            // Pulmonary Circuit
+            { from: "Right Ventricle", to: "Hub_Pulmonary", vessel: "Pulmonary Artery", path: [[175, 310], [120, 310]], type: 'deoxygenated' },
+            { from: "Hub_Pulmonary", to: "Lungs", vessel: "Pulmonary Artery", path: [[120, 310], [120, 150], [250, 150]], type: 'deoxygenated' },
+            { from: "Lungs", to: "Left Atrium", vessel: "Pulmonary Vein", path: [[250, 150], [380, 150], [380, 250], [325, 250]], type: 'oxygenated' },
+            { from: "Left Atrium", to: "Left Ventricle", vessel: "", path: [[325, 250], [325, 310]], type: 'oxygenated' },
+            { from: "Right Atrium", to: "Right Ventricle", vessel: "", path: [[175, 250], [175, 310]], type: 'deoxygenated' },
+
+            // Main Arterial Trunk (Aorta Segments)
+            { from: "Left Ventricle", to: "A_Heart", vessel: "Aorta", path: [[325, 310], [420, 310]], type: 'oxygenated' },
+            { from: "A_Heart", to: "A_Head", vessel: "Aorta", path: [[420, 310], [420, 60]], type: 'oxygenated' },
+            { from: "A_Heart", to: "A_Liver", vessel: "Aorta", path: [[420, 310], [420, 430]], type: 'oxygenated' },
+            { from: "A_Liver", to: "A_Intestine", vessel: "Aorta", path: [[420, 430], [420, 520]], type: 'oxygenated' },
+            { from: "A_Intestine", to: "A_Kidneys", vessel: "Aorta", path: [[420, 520], [420, 610]], type: 'oxygenated' },
+            { from: "A_Kidneys", to: "A_Body", vessel: "Aorta", path: [[420, 610], [420, 700]], type: 'oxygenated' },
+
+            // Organ Arterial Branches (Horizontal)
+            { from: "A_Head", to: "Head & Arms", vessel: "Carotid / Subclavian Artery", path: [[420, 60], [250, 60]], type: 'oxygenated' },
+            { from: "A_Liver", to: "Liver", vessel: "Hepatic Artery", path: [[420, 430], [250, 430]], type: 'oxygenated' },
+            { from: "A_Intestine", to: "Small Intestine", vessel: "Mesenteric Artery", path: [[420, 520], [250, 520]], type: 'oxygenated' },
+            { from: "A_Kidneys", to: "Kidneys", vessel: "Renal Artery", path: [[420, 610], [250, 610]], type: 'oxygenated' },
+            { from: "A_Body", to: "Other Body Parts", vessel: "Systemic Artery Branches", path: [[420, 700], [250, 700]], type: 'oxygenated' },
+
+            // Portal System Detour
+            { from: "Small Intestine", to: "Liver", vessel: "Hepatic Portal Vein", path: [[250, 520], [175, 520], [175, 440], [250, 440], [250, 430]], type: 'portal' },
+
+            // Organ Venous Branches (Horizontal)
+            { from: "Head & Arms", to: "V_Head", vessel: "Jugular / Subclavian Vein", path: [[250, 60], [60, 60]], type: 'deoxygenated' },
+            { from: "Liver", to: "V_Liver", vessel: "Hepatic Vein", path: [[250, 430], [60, 430]], type: 'deoxygenated' },
+            { from: "Kidneys", to: "V_Kidneys", vessel: "Renal Vein", path: [[250, 610], [60, 610]], type: 'deoxygenated' },
+            { from: "Other Body Parts", to: "V_Body", vessel: "Systemic Vein Branches", path: [[250, 700], [60, 700]], type: 'deoxygenated' },
+
+            // Main Venous Trunk (Vena Cava Segments)
+            { from: "V_Head", to: "V_Heart", vessel: "Anterior Vena Cava", path: [[60, 60], [60, 250]], type: 'deoxygenated' },
+            { from: "V_Body", to: "V_Kidneys", vessel: "Posterior Vena Cava", path: [[60, 700], [60, 610]], type: 'deoxygenated' },
+            { from: "V_Kidneys", to: "V_Liver", vessel: "Posterior Vena Cava", path: [[60, 610], [60, 430]], type: 'deoxygenated' },
+            { from: "V_Liver", to: "V_Heart", vessel: "Posterior Vena Cava", path: [[60, 430], [60, 250]], type: 'deoxygenated' },
+            { from: "V_Heart", to: "Right Atrium", vessel: "Vena Cava", path: [[60, 250], [175, 250]], type: 'deoxygenated' }
+        ];
+
+        let currentAnimation = null;
+        let isPaused = false;
+
+        window.onload = function() {
+            const startSelect = document.getElementById('startNode');
+            const endSelect = document.getElementById('endNode');
+            Object.keys(nodes).forEach(key => {
+                if (nodes[key].type !== 'hub') {
+                    startSelect.add(new Option(key, key)); endSelect.add(new Option(key, key));
+                }
+            });
+            startSelect.value = "Left Ventricle"; endSelect.value = "Kidneys";
+            drawMap();
+        };
+
+        function drawMap() {
+            const svg = document.getElementById('svg-map');
+            let linesHTML = '', hitboxHTML = '', bgHTML = '', boxHTML = '';
+
+            edges.forEach(edge => {
+                const d = edge.path.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(' ');
+                linesHTML += `<path d="${d}" class="vessel-path ${edge.type}" />`;
+                if (edge.vessel) {
+                    hitboxHTML += `<path d="${d}" class="vessel-hitbox" stroke="transparent" stroke-width="18" fill="none" 
+                        onmousemove="showTooltip(event, '${edge.vessel}')" onmouseout="hideTooltip()"/>`;
+                }
+            });
+
+            // Heart outline background
+            bgHTML += `<path d="M250,350 C160,280 190,210 250,250 C310,210 340,280 250,350 Z" fill="#e74c3c" opacity="0.15" />`;
+
+            for (let name in nodes) {
+                if (nodes[name].type !== 'hub') {
+                    const c = nodes[name];
+                    if (c.bg) bgHTML += `<g transform="translate(${c.x}, ${c.y})">${c.bg}</g>`;
+                    const nodeClass = c.type === 'heart' ? 'heart-node' : 'organ-node';
+                    boxHTML += `<rect x="${c.x - c.w/2}" y="${c.y - c.h/2}" width="${c.w}" height="${c.h}" class="${nodeClass}" />
+                                <text x="${c.x}" y="${c.y + 5}" text-anchor="middle">${name}</text>`;
+                }
+            }
+            
+            const vesselLabelsHTML = `
+                <text x="435" y="160" class="vessel-label" transform="rotate(90, 435, 160)">Aorta</text>
+                <text x="45" y="580" class="vessel-label vein" transform="rotate(-90, 45, 580)">Vena Cava</text>
+            `;
+
+            const rbcMarkerHTML = `<circle id="rbc-marker" cx="0" cy="0" r="7" fill="#e74c3c" stroke="white" stroke-width="2" style="display:none; filter: drop-shadow(0 0 6px rgba(231,76,60,0.9)); z-index: 100;"></circle>`;
+
+            svg.innerHTML = linesHTML + hitboxHTML + bgHTML + boxHTML + vesselLabelsHTML + rbcMarkerHTML;
+        }
+
+        function showTooltip(e, text) {
+            const tooltip = document.getElementById('tooltip');
+            const rect = document.getElementById('map-container').getBoundingClientRect();
+            tooltip.innerText = text; tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX - rect.left) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+        }
+
+        function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+        function findEdgePath(start, end) {
+            let queue = [[ { node: start, edge: null } ]];
+            let visited = new Set();
+            while (queue.length > 0) {
+                let path = queue.shift();
+                let currentNode = path[path.length - 1].node;
+                if (currentNode === end && path.length > 1) return path;
+                if (!visited.has(currentNode)) {
+                    if (path.length > 1 || start !== end) visited.add(currentNode);
+                    let nextEdges = edges.filter(e => e.from === currentNode);
+                    for (let edge of nextEdges) queue.push([...path, { node: edge.to, edge: edge }]);
+                }
+            }
+            return null;
+        }
+
+        function calcDistance(p1, p2) { return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]); }
+
+        function startNavigation() {
+            const start = document.getElementById('startNode').value;
+            const end = document.getElementById('endNode').value;
+            const routeOutput = document.getElementById('route-output');
+            const changesOutput = document.getElementById('content-changes-output');
+            const marker = document.getElementById('rbc-marker');
+            const animBtn = document.getElementById('animation-btn');
+
+            let fullPath = null;
+            if (start === end) {
+                let midpoint = (start === "Lungs" || start === "Right Atrium" || start === "Right Ventricle") ? "Other Body Parts" : "Lungs";
+                let p1 = findEdgePath(start, midpoint), p2 = findEdgePath(midpoint, end);
+                if (p1 && p2) fullPath = p1.concat(p2.slice(1));
+            } else {
+                fullPath = findEdgePath(start, end);
+            }
+
+            if (currentAnimation) currentAnimation.cancel();
+            isPaused = false; animBtn.style.display = 'none'; animBtn.innerText = "Pause";
+
+            if (fullPath) {
+                let htmlFormat = `<div class="path-step" style="border-left-color: #f1c40f;">Start: ${start}</div>`;
+                let changesFormat = '';
+                let allPoints = [];
+                let organsVisited = 0;
+                let prevVessel = "";
+                
+                if (organChanges[start]) {
+                    changesFormat += `<div class="change-card" style="border-left-color: #f1c40f;"><strong>🩸 Blood leaving [${start}]:</strong>${organChanges[start]}</div>`;
+                    organsVisited++;
+                }
+
+                for (let i = 1; i < fullPath.length; i++) {
+                    let step = fullPath[i];
+                    let currentVessel = step.edge.vessel;
+                    
+                    // Smart Vessel Output Logic
+                    if (currentVessel && currentVessel !== prevVessel) {
+                        if (currentVessel === "Aorta") {
+                            htmlFormat += `<div class="path-step" style="border-left-color: #e74c3c; background-color: #fdf5f6; color: #c0392b;">${currentVessel}</div>`;
+                        } else if (currentVessel.includes("Vena Cava")) {
+                            htmlFormat += `<div class="path-step" style="border-left-color: #3498db; background-color: #f4f9fd; color: #2980b9;">${currentVessel}</div>`;
+                        } else {
+                            htmlFormat += `<div class="vessel-text">⬇ Via: ${currentVessel}</div>`;
+                        }
+                        prevVessel = currentVessel;
+                    }
+
+                    // Node Output Logic (Skip hidden Circuit Hubs)
+                    if (nodes[step.node].type !== 'hub') {
+                        let borderColor = step.edge.type === 'oxygenated' ? '#ff7675' : 
+                                          (step.edge.type === 'portal' ? '#a29bfe' : '#74b9ff');
+                        
+                        htmlFormat += `<div class="path-step" style="border-left-color: ${borderColor};">${step.node}</div>`;
+                        
+                        if (organChanges[step.node]) {
+                            changesFormat += `<div class="change-card" style="border-left-color: ${borderColor};"><strong>🩸 After passing [${step.node}]:</strong>${organChanges[step.node]}</div>`;
+                            organsVisited++;
+                        }
+                    }
+
+                    // Build precise 90-degree animation path
+                    step.edge.path.forEach(point => {
+                        if (allPoints.length === 0) allPoints.push(point);
+                        else {
+                            let lastP = allPoints[allPoints.length - 1];
+                            if (lastP[0] !== point[0] || lastP[1] !== point[1]) allPoints.push(point);
+                        }
+                    });
+                }
+                
+                routeOutput.innerHTML = htmlFormat;
+                changesOutput.innerHTML = organsVisited === 0 ? `<div style="color: #7f8c8d; text-align: center; margin-top: 20px;">No significant chemical composition changes along this route.</div>` : changesFormat;
+
+                let totalDist = 0, segmentDists = [];
+                for (let i = 1; i < allPoints.length; i++) {
+                    let d = calcDistance(allPoints[i-1], allPoints[i]);
+                    segmentDists.push(d); totalDist += d;
+                }
+
+                let animationWaypoints = [{ transform: `translate(${allPoints[0][0]}px, ${allPoints[0][1]}px)`, offset: 0 }];
+                let currentDist = 0;
+                for (let i = 1; i < allPoints.length; i++) {
+                    currentDist += segmentDists[i-1];
+                    animationWaypoints.push({ 
+                        transform: `translate(${allPoints[i][0]}px, ${allPoints[i][1]}px)`, 
+                        offset: totalDist === 0 ? 1 : currentDist / totalDist 
+                    });
+                }
+
+                marker.style.display = 'block';
+                currentAnimation = marker.animate(animationWaypoints, { duration: (totalDist / 100) * 450, fill: 'forwards', easing: 'linear' });
+                animBtn.style.display = 'block'; 
+
+                currentAnimation.onfinish = function() {
+                    marker.style.display = 'none'; animBtn.style.display = 'none';
+                };
+
+            } else {
+                routeOutput.innerHTML = `<p style="color: red; text-align: center;">Route not found!</p>`;
+            }
+        }
+
+        function toggleAnimation() {
+            if (!currentAnimation) return;
+            const animBtn = document.getElementById('animation-btn');
+            if (isPaused) { currentAnimation.play(); isPaused = false; animBtn.innerText = "Pause"; } 
+            else { currentAnimation.pause(); isPaused = true; animBtn.innerText = "Resume"; }
+        }
+    </script>
+</body>
+</html>
