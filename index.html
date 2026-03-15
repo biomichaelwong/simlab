@@ -1,121 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioSim Interactive Lab</title>
-    <style>
-        :root {
-            --primary: #00ff88; /* Clinical Green */
-            --bg: #0f172a;      /* Deep Space Blue */
-            --card-bg: #1e293b;
-            --text: #f8fafc;
+<div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <button onclick="setLanguage('en')" id="btn-en" style="padding: 10px; cursor: pointer;">English</button>
+    <button onclick="setLanguage('cn')" id="btn-cn" style="padding: 10px; cursor: pointer;">中文</button>
+</div>
+
+<script>
+    const translations = {
+        en: {
+            title: "Virtual Biology Pavilion",
+            subtitle: "Interactive Human Systems Simulations",
+            sim1Title: "Lung Mechanics",
+            sim1Desc: "Visualizing diaphragm movement and Boyle's Law."
+        },
+        cn: {
+            title: "虚拟生物实验室",
+            subtitle: "交互式人体系统模拟",
+            sim1Title: "肺部力学",
+            sim1Desc: "可视化膈肌运动和波义耳定律。"
         }
+    };
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 10px;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            width: 90%;
-            max-width: 1200px;
-            padding: 20px;
-        }
-
-        .sim-card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            text-decoration: none;
-            color: var(--text);
-            text-align: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .sim-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
-        }
-
-        .sim-card h3 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: var(--primary);
-        }
-
-        .sim-card p {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-top: 10px;
-        }
-
-        .badge {
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--primary);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            align-self: center;
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>Virtual Biology Pavilion</h1>
-        <p>Interactive Human Systems Simulations</p>
-    </header>
-
-    <div class="container">
-        <a href="breathing_sim.html" class="sim-card">
-            <span class="badge">RESPIRATORY</span>
-            <h3>Lung Mechanics</h3>
-            <p>Visualizing diaphragm movement and Boyle's Law.</p>
-        </a>
-
-        <a href="heart_sim.html" class="sim-card">
-            <span class="badge">CIRCULATORY</span>
-            <h3>Cardiac Rhythm</h3>
-            <p>Simulating electrical impulses and valve timing.</p>
-        </a>
-
-        <a href="neuro_sim.html" class="sim-card">
-            <span class="badge">NERVOUS SYSTEM</span>
-            <h3>Synaptic Fire</h3>
-            <p>Action potentials and neurotransmitter flow.</p>
-        </a>
-
-    </div>
-
-</body>
-</html>
+    function setLanguage(lang) {
+        document.querySelector('h1').innerText = translations[lang].title;
+        document.querySelector('header p').innerText = translations[lang].subtitle;
+        
+        // Update specific cards
+        document.getElementById('sim1-title').innerText = translations[lang].sim1Title;
+        document.getElementById('sim1-desc').innerText = translations[lang].sim1Desc;
+        
+        // Save choice for next time
+        localStorage.setItem('preferredLang', lang);
+    }
+</script>
