@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breathing Simulator (DSE Biology)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans text-gray-800">
+
+  <div class="w-full max-w-7xl mx-auto bg-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
+    <div class="mb-6 text-center">
+      <h1 class="text-3xl font-bold text-gray-800">HKDSE Biology: Ventilation Mechanism</h1>
+      <p class="text-lg text-gray-600 mt-2">Interactive Simulation of Lung and Thoracic Cavity Pressure Changes</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col items-center justify-center">
+        <h2 class="text-2xl font-bold mb-3 text-gray-700">Thoracic Cavity Model</h2>
+        <div id="phaseText" class="text-3xl font-extrabold mb-6 text-blue-600">Inhalation</div>
+
+        <div class="relative w-full aspect-square max-w-lg bg-blue-50 rounded-xl overflow-hidden border-2 border-blue-100 flex justify-center items-center">
+          <svg viewBox="0 0 200 252" class="w-full h-full p-2">
+            <path d="M 91 18 L 91 80 L 109 80 L 109 18 Z" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2" />
+            <path d="M 91 80 L 66 107 L 75 112 L 100 86 Z" fill="#cbd5e1" />
+            <path d="M 109 80 L 134 107 L 125 112 L 100 86 Z" fill="#cbd5e1" />
+
+            <g id="lungs" style="transform-origin: 100px 80px; transition: transform 0.1s linear;">
+              <path d="M 95 85 C 66 85, 46 112, 52 150 C 58 168, 84 163, 95 149 Z" fill="#fca5a5" opacity="0.9" />
+              <path d="M 105 85 C 134 85, 154 112, 148 150 C 142 168, 116 163, 105 149 Z" fill="#fca5a5" opacity="0.9" />
+            </g>
+            
+            <g id="particlesGroup"></g>
+
+            <text x="100" y="126" text-anchor="middle" font-size="16" font-weight="bold" fill="#7f1d1d" opacity="0.8">Lungs</text>
+
+            <path id="diaphragm" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round" style="transition: all 0.1s linear;" />
+            <text x="100" y="235" text-anchor="middle" font-size="14" font-weight="bold" fill="#ef4444">Diaphragm</text>
+
+            <path id="leftRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
+            <path id="rightRib" fill="none" stroke="#94a3b8" stroke-width="4" stroke-dasharray="8 4" style="transition: all 0.1s linear;" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col items-center">
+        <h2 class="text-2xl font-bold mb-4 text-gray-700 text-center w-full">Pressure Changes Over Time</h2>
+        
+        <div class="relative w-full max-w-lg mx-auto flex-grow min-h-[550px] mb-4">
+          <canvas id="pressureChart"></canvas>
+        </div>
+
+        <div class="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner space-y-3">
+          <div class="flex items-center justify-center space-x-4">
+            <button id="playBtn" title="Press Spacebar to Play/Pause" class="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition shadow-md text-xl pb-1">
+              ⏸
+            </button>
+            <button id="resetBtn" title="Reset" class="flex items-center justify-center w-10 h-10 bg-gray-300 text-gray-700 rounded-full hover:bg-gray-400 transition shadow-md text-lg pb-1">
+              ↺
+            </button>
+          </div>
+          
+          <div class="w-full px-4">
+            <div class="flex justify-between text-sm text-gray-600 font-bold mb-1">
+              <span>0s</span>
+              <span id="timeDisplay" class="text-base text-blue-800">Time: 0.00s</span>
+              <span>4s</span>
+            </div>
+            <input id="timeSlider" type="range" min="0" max="4" step="0.01" value="0" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 bg-yellow-50 p-6 rounded-lg border border-yellow-300 text-gray-800 shadow-sm">
+      <h3 class="font-bold text-xl mb-4 flex items-center text-yellow-900">
+        <span class="bg-yellow-400 text-yellow-900 w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-lg">!</span>
+        DSE Key Concept Notes:
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-base leading-relaxed">
+        <div>
+          <h4 class="font-bold text-purple-700 mb-2 text-lg">1. Intrapleural Pressure (Purple Line)</h4>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>It is <strong class="text-black">always negative</strong> (below atmospheric pressure). This slight vacuum keeps the lungs adhered to the chest wall, preventing lung collapse.</li>
+            <li>During inhalation, as the thoracic cavity expands, intrapleural pressure <strong class="text-black">drops further</strong> (from –4 to –8 mm Hg).</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-red-700 mb-2 text-lg">2. Sequence of Events (Inhalation)</h4>
+          <ol class="list-decimal pl-6 space-y-2">
+            <li>Intercostal muscles and diaphragm <strong class="text-black">contract</strong>.</li>
+            <li>Ribs move <strong class="text-black">upwards and outwards</strong>, while the diaphragm flattens, causing thoracic cavity <strong class="text-black">volume to increase</strong>.</li>
+            <li>Intrapleural pressure drops, pulling the lungs outward.</li>
+            <li>Lung <strong class="text-black">volume increases</strong>.</li>
+            <li>Alveolar pressure drops <strong class="text-black">below atmospheric pressure</strong> (deep red line dips below 0).</li>
+            <li>Air is drawn into the lungs down the pressure gradient.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Generate Data ---
+    const times = [];
+    const alveolarData = [];
+    const intrapleuralData = [];
+    
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 10;
+      times.push(t);
+      alveolarData.push(-1.5 * Math.sin((Math.PI * t) / 2));
+      intrapleuralData.push(-6 + 2 * Math.cos((Math.PI * t) / 2));
+    }
+
+    window.currentTime = 0;
+
+    // --- 2. Setup Chart.js ---
+    const customBackgroundAndLinePlugin = {
+      id: 'customBackgroundAndLine',
+      beforeDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        ctx.save();
+        // Inhalation background
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.06)';
+        ctx.fillRect(xAxis.getPixelForValue(0), yAxis.top, xAxis.getPixelForValue(2) - xAxis.getPixelForValue(0), yAxis.bottom - yAxis.top);
+        // Exhalation background
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.06)';
+        ctx.fillRect(xAxis.getPixelForValue(2), yAxis.top, xAxis.getPixelForValue(4) - xAxis.getPixelForValue(2), yAxis.bottom - yAxis.top);
+        
+        // Atmospheric Pressure Line
+        const zeroY = yAxis.getPixelForValue(0);
+        ctx.beginPath();
+        ctx.moveTo(xAxis.left, zeroY);
+        ctx.lineTo(xAxis.right, zeroY);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#9ca3af';
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.restore();
+      },
+      afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        if (window.currentTime !== undefined) {
+          const xPixel = xAxis.getPixelForValue(window.currentTime);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(xPixel, yAxis.top);
+          ctx.lineTo(xPixel, yAxis.bottom);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#f59e0b';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    };
+
+    const ctx = document.getElementById('pressureChart').getContext('2d');
+    Chart.defaults.font.size = 14;
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: times,
+        datasets: [
+          {
+            label: 'Alveolar Pressure',
+            data: alveolarData,
+            borderColor: '#b91c1c', 
+            borderWidth: 4,
+            pointRadius: 0,
+            tension: 0.4
+          },
+          {
+            label: 'Intrapleural Pressure',
+            data: intrapleuralData,
+            borderColor: '#8b5cf6',
+            borderWidth: 4,
+            pointRadius: 0,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: {
+            type: 'linear', min: 0, max: 4,
+            title: { display: true, text: 'Time (s)', font: { weight: 'bold', size: 16 } }
+          },
+          y: {
+            min: -10, max: 2,
+            title: { display: true, text: 'Pressure (mm Hg)', font: { weight: 'bold', size: 16 } }
+          }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' } } },
+          tooltip: {
+            titleFont: { size: 16 }, bodyFont: { size: 14 },
+            callbacks: {
+              title: (ctx) => `Time: ${ctx[0].parsed.x.toFixed(2)} s`,
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} mm Hg`
+            }
+          }
+        }
+      },
+      plugins: [customBackgroundAndLinePlugin]
+    });
+
+    // --- 3. Animation Logic & Particle System ---
+    let time = 0;
+    let isPlaying = true;
+    let lastUpdate = performance.now();
+    let animationId;
+    let particles = [];
+
+    const lungs = document.getElementById('lungs');
+    const diaphragm = document.getElementById('diaphragm');
+    const leftRib = document.getElementById('leftRib');
+    const rightRib = document.getElementById('rightRib');
+    const particlesGroup = document.getElementById('particlesGroup');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const timeSlider = document.getElementById('timeSlider');
+    const phaseText = document.getElementById('phaseText');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function manageParticles(delta) {
+      const isInhaling = time < 2;
+      
+      if (isPlaying && Math.random() < 0.35) {
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        p.setAttribute("r", "2.5");
+        p.setAttribute("fill", isInhaling ? "#3b82f6" : "#6b7280"); 
+        particlesGroup.appendChild(p);
+
+        particles.push({
+          el: p,
+          progress: 0,
+          side: Math.random() > 0.5 ? 1 : -1,
+          isInhaling: isInhaling,
+          speed: 0.6 + Math.random() * 0.4 
+        });
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.progress += delta * p.speed * 1.5;
+
+        if (p.progress >= 1) {
+          p.el.remove();
+          particles.splice(i, 1);
+          continue;
+        }
+
+        let x, y, opacity;
+        let actualProgress = p.isInhaling ? p.progress : (1 - p.progress);
+
+        if (actualProgress < 0.6) {
+          let t = actualProgress / 0.6; 
+          x = 100 + (Math.random() * 6 - 3);
+          y = 15 + t * 65;
+          
+          if (p.isInhaling) {
+            opacity = t < 0.2 ? t * 5 : 1;
+          } else {
+            opacity = t < 0.2 ? t * 5 : 1;
+          }
+        } else {
+          let t = (actualProgress - 0.6) / 0.4; 
+          x = 100 + (t * 30 * p.side) + (Math.random() * 6 - 3);
+          y = 80 + (t * 35);
+          
+          if (p.isInhaling) {
+            opacity = 1 - t;
+          } else {
+            opacity = t;
+          }
+        }
+
+        p.el.setAttribute("cx", x);
+        p.el.setAttribute("cy", y);
+        p.el.setAttribute("opacity", Math.max(0, Math.min(1, opacity)));
+      }
+    }
+
+    function updateSimulation() {
+      const volumeFactor = (1 - Math.cos((Math.PI * time) / 2)) / 2;
+      
+      const lungScaleX = 1 + 0.25 * volumeFactor;
+      const lungScaleY = 1 + 0.15 * volumeFactor;
+      
+      const totalRibWidth = 154 + 30 * volumeFactor;
+      const halfRibWidth = totalRibWidth / 2;
+      const ribLeftX = 100 - halfRibWidth;
+      const ribRightX = 100 + halfRibWidth;
+      const ribTopY = 55 - 15 * volumeFactor;
+      const ribBottomY = 195 - 5 * volumeFactor;
+      const cornerRadius = 40;
+      
+      const diaphragmBaseY = 193;
+      const diaphragmCurveY = 171 + 34 * volumeFactor;
+
+      lungs.style.transform = `scale(${lungScaleX}, ${lungScaleY})`;
+      diaphragm.setAttribute('d', `M ${100 - halfRibWidth + 6} ${diaphragmBaseY} Q 100 ${diaphragmCurveY} ${100 + halfRibWidth - 6} ${diaphragmBaseY}`);
+      leftRib.setAttribute('d', `M ${ribLeftX} ${ribBottomY} L ${ribLeftX} ${ribTopY + cornerRadius} Q ${ribLeftX} ${ribTopY} ${ribLeftX + cornerRadius} ${ribTopY}`);
+      rightRib.setAttribute('d', `M ${ribRightX} ${ribBottomY} L ${ribRightX} ${ribTopY + cornerRadius} Q ${ribRightX} ${ribTopY} ${ribRightX - cornerRadius} ${ribTopY}`);
+
+      timeDisplay.innerText = `Time: ${time.toFixed(2)}s`;
+      timeSlider.value = time;
+
+      if (time < 2) {
+        phaseText.innerText = 'Inhalation';
+        phaseText.className = 'text-3xl font-extrabold mb-6 text-blue-600';
+      } else {
+        phaseText.innerText = 'Exhalation';
+        phaseText.className = 'text-3xl font-extrabold mb-6 text-red-600';
+      }
+
+      window.currentTime = time;
+      chart.update('none'); 
+    }
+
+    function animate(now) {
+      if (!isPlaying) return;
+      const delta = (now - lastUpdate) / 1000;
+      lastUpdate = now;
+      
+      time += delta;
+      if (time >= 4) time = 0;
+      
+      updateSimulation();
+      manageParticles(delta);
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // --- 4. Event Listeners ---
+    playBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playBtn.innerText = isPlaying ? '⏸' : '▶';
+      if (isPlaying) {
+        lastUpdate = performance.now();
+        animationId = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(animationId);
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      time = 0;
+      isPlaying = false;
+      playBtn.innerText = '▶';
+      
+      particlesGroup.innerHTML = '';
+      particles = [];
+
+      cancelAnimationFrame(animationId);
+      updateSimulation();
+    });
+
+    timeSlider.addEventListener('input', (e) => {
+      time = parseFloat(e.target.value);
+      isPlaying = false;
+      playBtn.innerText = '▶';
+      
+      particlesGroup.innerHTML = '';
+      particles = [];
+
+      cancelAnimationFrame(animationId);
+      updateSimulation();
+    });
+
+    // Spacebar shortcut
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault(); 
+        playBtn.click(); 
+      }
+    });
+
+    lastUpdate = performance.now();
+    animationId = requestAnimationFrame(animate);
+
+  </script>
+</body>
+</html>
