@@ -53,6 +53,22 @@
         }
         button:hover { background-color: #2980b9; }
         input[type="range"] { vertical-align: middle; }
+        
+        /* DSE Info Box Styles */
+        .dse-info-box {
+            max-width: 750px;
+            background-color: #fffde7;
+            border-left: 5px solid #fbc02d;
+            padding: 15px 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 14px;
+            line-height: 1.6;
+            color: #444;
+        }
+        .dse-info-box h3 { margin-top: 0; color: #f57f17; display: flex; align-items: center; gap: 8px; }
+        .dse-tag { background: #fbc02d; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -76,6 +92,20 @@
         <div class="legend-item"><canvas id="icon-glucose"></canvas> 葡萄糖</div>
         <div class="legend-item"><canvas id="icon-water"></canvas> 水分</div>
         <div class="legend-item"><canvas id="icon-urea"></canvas> 尿素</div>
+    </div>
+
+    <div class="dse-info-box">
+        <h3>💡 HKDSE Biology: Exam Focus</h3>
+        <p><b>1. 近曲小管 (PCT) - 選擇性再吸收 <span class="dse-tag">必考</span></b><br>
+        在模擬中，你會看到<b>葡萄糖</b>與<b>氨基酸</b>在第一段全部消失。在 DSE 中，你要記得這是透過<b>主動運輸 (Active Transport)</b> 完成的，因此 PCT 細胞含有大量<b>線粒體</b>以提供能量。</p>
+        
+        <p><b>2. 髓質滲透梯度 (Medullary Gradient)</b><br>
+        注意亨利氏套進入的<b>髓質區 (Medulla)</b>。DSE 要求學生理解髓質的高滲透壓（高濃度）是為了讓水分能透過滲透作用從集尿管中被重新吸收。</p>
+        
+        <p><b>3. 抗利尿激素 (ADH) 與滲透調節 <span class="dse-tag">重點</span></b><br>
+        當你調高 ADH 濃度時，集尿管壁對水的<b>透性 (Permeability)</b> 增加。
+        <br>• <b>ADH 高：</b>產生少量、濃尿液（常見於運動出汗後）。
+        <br>• <b>ADH 低：</b>產生大量、稀尿液（常見於飲用大量清水後）。</p>
     </div>
 
     <script>
@@ -207,8 +237,8 @@
         const TYPES = {
             GLUCOSE: { id: 'glucose', size: 6, color: '#9b59b6' }, 
             AMINO: { id: 'amino', size: 6, color: '#a9dfbf' }, 
-            WATER: { id: 'water', size: 7 },               
-            UREA: { id: 'urea', size: 5 }                 
+            WATER: { id: 'water', size: 7 },                
+            UREA: { id: 'urea', size: 5 }                  
         };
 
         function drawHexagon(ctx, x, y, size, color) {
@@ -300,9 +330,9 @@
             for(let x=0; x<190; x+=3) { simCtx.lineTo(x, 60 - 15 + Math.sin(x*1.5)*3); }
             simCtx.stroke();
 
-            simCtx.fillStyle = '#2c3e50'; simCtx.font = 'bold 14px Arial';
-            simCtx.fillText("PCT", 80, 30);
-            simCtx.fillText("DCT", 380, 30);
+simCtx.fillStyle = '#2c3e50'; simCtx.font = 'bold 14px Arial';
+            simCtx.fillText("近曲小管", 65, 30);
+            simCtx.fillText("遠曲小管", 365, 30);
             simCtx.fillText("集尿管", 550, 350);
             simCtx.fillStyle = '#e74c3c';
             simCtx.fillText("周圍微血管", 25, 135);
@@ -343,7 +373,7 @@
                 let rand = Math.random();
                 if(rand < 0.55) this.type = TYPES.WATER;      
                 else if (rand < 0.70) this.type = TYPES.UREA; 
-                else if (rand < 0.85) this.type = TYPES.GLUCOSE;               
+                else if (rand < 0.85) this.type = TYPES.GLUCOSE;                
                 else this.type = TYPES.AMINO;
 
                 this.progress = -(Math.random() * 120); 
@@ -394,12 +424,25 @@
                 } 
                 else if (this.state === 'membraning') {
                     this.membraningFrames++;
-                    let t = this.membraningFrames / 30.0;
-                    this.x = this.startX + (this.targetX - this.startX) * t; this.y = this.startY + (this.targetY - this.startY) * t;
-                    if ((this.type.id === 'glucose' || this.type.id === 'amino') && this.membraningFrames === 15) {
-                        simCtx.save(); simCtx.fillStyle = '#d35400'; simCtx.font = 'bold 10px Arial'; simCtx.fillText("ATP", this.x+8, this.y); simCtx.restore();
+                    
+                    // 0.8 seconds at 60 frames per second = 48 frames
+                    const totalMembraneFrames = 48; 
+                    let t = this.membraningFrames / totalMembraneFrames;
+                    
+                    this.x = this.startX + (this.targetX - this.startX) * t; 
+                    this.y = this.startY + (this.targetY - this.startY) * t;
+                    
+                    // Draw the ATP text from frame 5 until frame 45 so it stays visible
+                    if ((this.type.id === 'glucose' || this.type.id === 'amino') && 
+                        this.membraningFrames >= 5 && this.membraningFrames <= 45) {
+                        simCtx.save(); 
+                        simCtx.fillStyle = '#d35400'; 
+                        simCtx.font = 'bold 11px Arial'; 
+                        simCtx.fillText("ATP", this.x + 10, this.y - 5); 
+                        simCtx.restore();
                     }
-                    if (this.membraningFrames >= 30) {
+                    
+                    if (this.membraningFrames >= totalMembraneFrames) {
                         this.state = 'blood';
                     }
                 } 
@@ -411,7 +454,6 @@
                 }
             }
 
-            // ⭐ Updated: Now scans the blood vessel to find the absolute closest physical point
             startAbsorption() {
                 this.state = 'membraning'; this.hasReabsorbed = true;
                 this.startX = this.x; this.startY = this.y; this.membraningFrames = 0;
