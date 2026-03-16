@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HKDSE Biology - Ultrafiltration Interactive Simulator</title>
+    <style>
+        :root {
+            --primary: #c0392b;
+            --secondary: #2980b9;
+            --bg-color: #f4f7f6;
+            --text-dark: #2c3e50;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: var(--text-dark);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 5px 15px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+        }
+        .canvas-section {
+            position: relative;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.02);
+            border: 1px solid #e1e8ed;
+            width: 650px;
+            height: 480px;
+        }
+        .sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .card {
+            background: #fff;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #edf2f7;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .card h3 {
+            margin: 0 0 12px 0;
+            color: var(--primary);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #fadbd8;
+            padding-bottom: 8px;
+        }
+        .legend-group h4 {
+            color: #7f8c8d; margin: 10px 0 8px 0; font-size: 13px; font-weight: 600;
+        }
+        .legend-item {
+            display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 500;
+        }
+        .legend-icon { width: 28px; height: 28px; margin-right: 10px; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.1));}
+        
+        .dse-notes {
+            background: #f8fbfa;
+            border-left: 4px solid #27ae60;
+        }
+        .dse-notes h3 { color: #27ae60; border-bottom-color: #a9dfbf; }
+        .dse-notes p { font-size: 13.5px; line-height: 1.6; color: #34495e; margin: 0 0 10px 0;}
+        .highlight { color: #c0392b; font-weight: bold; }
+        
+        .controls { display: flex; gap: 10px; margin-top: auto; }
+        button {
+            flex: 1; padding: 14px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px;
+            background: linear-gradient(180deg, #e74c3c, #c0392b); color: white;
+            border: none; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(231,76,60,0.3); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(231,76,60,0.4); }
+        button:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(231,76,60,0.3); }
+    </style>
+</head>
+<body>
+
+    <h1>Urine Formation: Ultrafiltration</h1>
+    
+    <div class="main-wrapper">
+        <div class="canvas-section">
+            <canvas id="simCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <div class="card legend-group">
+                <h3>🔬 Molecules (Legend)</h3>
+                <h4>Remain in Blood (Large Molecules / Cells)</h4>
+                <div class="legend-item"><canvas class="legend-icon" id="icon-rbc"></canvas><span>Red Blood Cell (RBC)</span></div>
+                <div class="legend-item"><canvas class="legend-icon" id="icon-protein"></canvas><span>Plasma Protein</span></div>
+                
+                <h4>Enter Bowman's Capsule (Small Molecules)</h4>
+                <div class="legend-item"><canvas class="legend-icon" id="icon-glucose"></canvas><span>Glucose</span></div>
+                <div class="legend-item"><canvas class="legend-icon" id="icon-aa"></canvas><span>Amino Acid</span></div>
+                <div class="legend-item"><canvas class="legend-icon" id="icon-water"></canvas><span>Water, Salts, Urea</span></div>
+            </div>
+
+            <div class="card dse-notes">
+                <h3>📝 DSE Exam Focus</h3>
+                <p>1. Blood flows from the wider <span class="highlight">afferent arteriole</span> to the narrower <span class="highlight">efferent arteriole</span>.</p>
+                <p>2. This creates <span class="highlight">High Hydrostatic Pressure</span> inside the glomerulus.</p>
+                <p>3. The high pressure forces water and small soluble molecules out of the capillaries into <span class="highlight">Bowman's capsule</span> to form the glomerular filtrate. This process does not consume energy.</p>
+            </div>
+
+            <div class="controls">
+                <button id="toggleBtn">Pause Animation</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Retina high-resolution support
+    const dpr = window.devicePixelRatio || 1;
+    const width = 650;
+    const height = 480; 
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    let isPlaying = true;
+    let particles = [];
+    let time = 0;
+
+    const TYPES = {
+        RBC: { id: 'rbc', size: 10, isLarge: true },
+        PROTEIN: { id: 'protein', size: 8, isLarge: true },
+        GLUCOSE: { id: 'glucose', size: 5, isLarge: false },
+        AA: { id: 'aa', size: 5, isLarge: false },
+        WATER: { id: 'water', size: 6, isLarge: false }
+    };
+
+    function drawHexagon(ctx, x, y, size, color) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i - Math.PI / 6;
+            ctx.lineTo(x + size * Math.cos(angle), y + size * Math.sin(angle));
+        }
+        ctx.closePath();
+        ctx.fillStyle = color; ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#5b2c6f'; ctx.stroke();
+    }
+
+    function drawTriangle(ctx, x, y, size, color) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - size);
+        ctx.lineTo(x + size * 0.9, y + size * 0.7);
+        ctx.lineTo(x - size * 0.9, y + size * 0.7);
+        ctx.closePath();
+        ctx.fillStyle = color; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
+    }
+
+    function drawWater(ctx, x, y, size) {
+        const radGrad = ctx.createRadialGradient(x - size*0.2, y - size*0.2, size*0.1, x, y, size);
+        radGrad.addColorStop(0, '#5dade2'); radGrad.addColorStop(1, '#21618c');
+        ctx.fillStyle = radGrad;
+        ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        
+        ctx.fillStyle = '#ffffff'; ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 2;
+        ctx.beginPath(); ctx.arc(x - size*0.75, y - size*0.6, size*0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + size*0.75, y - size*0.6, size*0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawProtein(ctx, x, y, size) {
+        ctx.strokeStyle = '#27ae60'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x - size, y);
+        ctx.bezierCurveTo(x - size, y - size*1.5, x + size, y - size*1.5, x + size, y);
+        ctx.bezierCurveTo(x + size, y + size, x - size*0.5, y + size, x - size*0.2, y);
+        ctx.stroke();
+    }
+
+    function drawRBC(ctx, x, y, size) {
+        const outerGrad = ctx.createRadialGradient(x - size*0.3, y - size*0.3, size*0.2, x, y, size);
+        outerGrad.addColorStop(0, '#ff6b6b'); outerGrad.addColorStop(0.7, '#e74c3c'); outerGrad.addColorStop(1, '#922b21');
+        ctx.fillStyle = outerGrad;
+        ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        
+        const innerGrad = ctx.createRadialGradient(x, y, 0, x, y, size * 0.6);
+        innerGrad.addColorStop(0, 'rgba(146, 43, 33, 0.5)'); innerGrad.addColorStop(1, 'rgba(231, 76, 60, 0)');
+        ctx.fillStyle = innerGrad;
+        ctx.beginPath(); ctx.arc(x, y, size * 0.6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawParticle(ctx, p, x = p.x, y = p.y) {
+        ctx.save();
+        switch(p.type.id) {
+            case 'rbc': drawRBC(ctx, x, y, p.type.size); break;
+            case 'protein': drawProtein(ctx, x, y, p.type.size); break;
+            case 'glucose': drawHexagon(ctx, x, y, p.type.size, '#9b59b6'); break;
+            case 'aa': drawTriangle(ctx, x, y, p.type.size, p.color); break;
+            case 'water': drawWater(ctx, x, y, p.type.size); break;
+        }
+        ctx.restore();
+    }
+
+    function getGlomPos(t) { 
+        const startX = 180, endX = 350, baseY = 185;
+        const loops = 3.5; 
+        const angle = t * loops * Math.PI * 2;
+        const envelope = Math.sin(t * Math.PI); 
+        const x = startX + (endX - startX) * t - Math.cos(angle) * 35 * envelope;
+        const y = baseY + Math.sin(angle) * 80 * envelope;
+        return {x, y};
+    }
+
+    function drawArrow(ctx, x, y, angle, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, -5);
+        ctx.lineTo(10, 0);
+        ctx.lineTo(0, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawBackground() {
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.save();
+        const bowmanGrad = ctx.createRadialGradient(265, 185, 30, 265, 185, 160);
+        bowmanGrad.addColorStop(0, '#fef9e7');
+        bowmanGrad.addColorStop(1, '#f9e79f');
+        
+        ctx.fillStyle = bowmanGrad;
+        ctx.strokeStyle = '#d4ac0d';
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        
+        ctx.beginPath();
+        ctx.arc(265, 185, 105, Math.PI * 1.15, Math.PI * -0.15, false);
+        ctx.lineTo(345, 300);
+        ctx.lineTo(290, 480); 
+        ctx.lineTo(240, 480); 
+        ctx.lineTo(185, 300);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        const arrowAlpha = (Math.sin(time * 0.05) + 1) / 2 * 0.5 + 0.2; 
+        drawArrow(ctx, 265, 340, Math.PI/2, `rgba(212, 172, 13, ${arrowAlpha})`);
+        drawArrow(ctx, 265, 390, Math.PI/2, `rgba(212, 172, 13, ${arrowAlpha})`);
+        ctx.restore();
+
+        ctx.save();
+        const bloodGrad = ctx.createLinearGradient(0, 160, 0, 210);
+        bloodGrad.addColorStop(0, '#c0392b');
+        bloodGrad.addColorStop(0.3, '#e74c3c');
+        bloodGrad.addColorStop(0.7, '#e74c3c');
+        bloodGrad.addColorStop(1, '#922b21');
+
+        ctx.fillStyle = bloodGrad;
+        ctx.fillRect(-50, 155, 232, 55); 
+        
+        const efferentGrad = ctx.createLinearGradient(0, 170, 0, 200);
+        efferentGrad.addColorStop(0, '#c0392b');
+        efferentGrad.addColorStop(0.5, '#e74c3c');
+        efferentGrad.addColorStop(1, '#922b21');
+        ctx.fillStyle = efferentGrad;
+        ctx.fillRect(348, 170, 310, 30); 
+
+        drawArrow(ctx, 60, 182, 0, `rgba(255, 255, 255, ${arrowAlpha})`);
+        drawArrow(ctx, 450, 185, 0, `rgba(255, 255, 255, ${arrowAlpha})`);
+        ctx.restore();
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        const drawCoil = (thickness, color) => {
+            ctx.beginPath();
+            for(let i=0; i<=100; i++) {
+                let p = getGlomPos(i/100);
+                if(i===0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+        };
+
+        drawCoil(18, '#7b241c');
+        drawCoil(13, '#e74c3c');
+        ctx.restore();
+
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = 'bold 15px Arial';
+        
+        ctx.fillText("Afferent Arteriole (Wider)", 15, 140);
+        ctx.fillText("Efferent Arteriole (Narrower)", 415, 155);
+        ctx.fillText("Bowman's Capsule", 115, 310);
+        ctx.fillText("Filtrate flows to PCT", 90, 440);
+
+        ctx.save();
+        const pressurePulse = 1 + Math.sin(time * 0.1) * 0.05; 
+        ctx.translate(265, 80);
+        ctx.scale(pressurePulse, pressurePulse);
+        ctx.fillStyle = '#c0392b';
+        ctx.font = '900 17px Arial';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(231, 76, 60, 0.5)';
+        ctx.shadowBlur = 10;
+        ctx.fillText("⚠️ Glomerulus (High Hydrostatic Pressure)", 0, 0);
+        ctx.restore();
+    }
+
+    class Particle {
+        constructor() { this.reset(); }
+
+        reset() {
+            const keys = Object.keys(TYPES);
+            this.type = TYPES[keys[Math.floor(Math.random() * keys.length)]];
+            this.x = Math.random() * -200; 
+            this.y = 160 + Math.random() * 45; 
+            this.baseSpeed = 0.5 + Math.random() * 0.4; 
+            this.state = 'afferent'; 
+            this.progress = 0; 
+            this.filtered = false;
+            
+            if (this.type.id === 'aa') {
+                const colors = ['#f1c40f', '#e67e22', '#1abc9c', '#3498db'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            if (!this.type.isLarge && Math.random() < 0.7) this.filtered = true;
+        }
+
+        update() {
+            if (this.state === 'afferent') {
+                this.x += this.baseSpeed * 2.5; 
+                if (this.x > 140) {
+                    this.y += (185 - this.y) * 0.08;
+                }
+                if (this.x >= 180) {
+                    this.state = 'glomerulus';
+                    this.progress = 0;
+                }
+            } 
+            else if (this.state === 'glomerulus') {
+                this.progress += this.baseSpeed * 0.0035; 
+                let pos = getGlomPos(this.progress);
+                this.x = pos.x;
+                this.y = pos.y;
+
+                if (this.filtered && this.y > 220 && Math.random() < 0.04) {
+                    this.state = 'bowmans';
+                }
+                else if (this.progress >= 1) {
+                    this.state = 'efferent';
+                    this.targetY = 175 + Math.random() * 20; 
+                }
+            } 
+            else if (this.state === 'efferent') {
+                this.x += this.baseSpeed * 3.5;
+                this.y += (this.targetY - this.y) * 0.1;
+                if (this.x > width + 50) this.reset();
+            } 
+            else if (this.state === 'bowmans') {
+                this.y += this.baseSpeed * 1.8;
+                this.x += (265 - this.x) * 0.015;
+                if (this.y > height + 50) this.reset();
+            }
+        }
+    }
+
+    for (let i = 0; i < 70; i++) {
+        let p = new Particle();
+        p.x = Math.random() * 650 - 100; 
+        
+        if(p.x < 180) { 
+            p.state = 'afferent';
+            p.y = 160 + Math.random() * 45; 
+        }
+        else if(p.x >= 350) { 
+            p.state = 'efferent'; 
+            p.targetY = 175 + Math.random() * 20; 
+        }
+        else {
+            p.state = 'glomerulus';
+            p.progress = (p.x - 180) / 170; 
+        }
+        particles.push(p);
+    }
+
+    function animate() {
+        if (!isPlaying) return;
+        time++;
+        drawBackground();
+        particles.forEach(p => { p.update(); drawParticle(ctx, p); });
+        requestAnimationFrame(animate);
+    }
+
+    ['rbc', 'protein', 'glucose', 'aa', 'water'].forEach(id => {
+        let cvs = document.getElementById(`icon-${id}`);
+        cvs.width = 28 * dpr; cvs.height = 28 * dpr;
+        cvs.style.width = '28px'; cvs.style.height = '28px';
+        let cx = cvs.getContext('2d'); cx.scale(dpr, dpr);
+        drawParticle(cx, { type: TYPES[id.toUpperCase()], color: id==='aa'?'#f1c40f':null }, 14, 14);
+    });
+
+    document.getElementById('toggleBtn').onclick = function() {
+        isPlaying = !isPlaying;
+        this.textContent = isPlaying ? 'Play Animation' : 'Pause Animation';
+        if (isPlaying) animate();
+    };
+
+    animate();
+</script>
+</body>
+</html>

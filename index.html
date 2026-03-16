@@ -102,13 +102,24 @@
             <p data-key="desc2">Simulating pulse and blood flow dynamics.</p>
         </a>
 
-         <a href="circulation_en.html" class="sim-card" id="card3">
+        <a href="circulation_en.html" class="sim-card" id="card3">
             <span class="badge" data-key="cat3">CIRCULATORY</span>
             <h3 data-key="title3">Double circulation route</h3>
             <p data-key="desc3">Simulating blood circulation.</p>
         </a>
 
-        </div>
+        <a href="ultrafiltration_en.html" class="sim-card" id="card4">
+            <span class="badge" data-key="cat4">EXCRETORY</span>
+            <h3 data-key="title4">Ultrafiltration</h3>
+            <p data-key="desc4">Interactive simulator for ultrafiltration in the Bowman's capsule.</p>
+        </a>
+
+        <a href="reabsorption_en.html" class="sim-card" id="card5">
+            <span class="badge" data-key="cat5">EXCRETORY</span>
+            <h3 data-key="title5">Tubular Reabsorption</h3>
+            <p data-key="desc5">Visualizing tubular reabsorption and urine formation.</p>
+        </a>
+    </div>
 
     <script>
         const translations = {
@@ -119,15 +130,19 @@
                 cat1: "RESPIRATORY", title1: "Breathing Mechanics", desc1: "Visualizing lung pressure and diaphragm movement.",
                 cat2: "CIRCULATORY", title2: "Heart Rate", desc2: "Simulating pulse and blood flow dynamics.",
                 cat3: "CIRCULATORY", title3: "Blood Circulation Navigator", desc3: "Simulating blood double circulations.",
+                cat4: "EXCRETORY", title4: "Ultrafiltration", desc4: "Interactive simulator for ultrafiltration in the Bowman's capsule.",
+                cat5: "EXCRETORY", title5: "Tubular Reabsorption", desc5: "Visualizing tubular reabsorption and urine formation.",
                 suffix: "_en.html" // Link points to English files
             },
             cn: {
                 btn: "English Version",
                 mainTitle: "生物互動實驗室",
-                subTitle: "請選擇一個模擬程​​式開始學習",
+                subTitle: "請選擇一個模擬程式開始學習",
                 cat1: "呼吸系統", title1: "呼吸力學", desc1: "可視化肺部壓力和膈肌運動。",
                 cat2: "循環系統", title2: "心率模擬", desc2: "模擬脈搏和血流動力學。",
                 cat3: "循環系統", title3: "血液循環導航", desc3: "模擬血液的雙循環流動。",
+                cat4: "排泄系統", title4: "超濾作用", desc4: "模擬腎小囊中的超濾作用。",
+                cat5: "排泄系統", title5: "腎小管再吸收", desc5: "可視化再吸收與尿液形成過程。",
                 suffix: "_cn.html" // Link points to Chinese files
             }
         };
@@ -149,8 +164,7 @@
                 el.innerText = data[key];
             });
 
-            // 3. Update Links (The magic part!)
-            // Changes "breathing_en.html" to "breathing_cn.html"
+            // 3. Update Links
             updateLinks(currentLang);
         }
 
@@ -158,7 +172,6 @@
             const cards = document.querySelectorAll('.sim-card');
             cards.forEach(card => {
                 let currentHref = card.getAttribute('href');
-                // Remove the old suffix and add the new one
                 let baseName = currentHref.split('_')[0]; 
                 card.setAttribute('href', baseName + translations[lang].suffix);
             });
