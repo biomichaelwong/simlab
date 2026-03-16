@@ -104,7 +104,7 @@
 
         <a href="circulation_en.html" class="sim-card" id="card3">
             <span class="badge" data-key="cat3">CIRCULATORY</span>
-            <h3 data-key="title3">Blood Circulation Navigator</h3>
+            <h3 data-key="title3">Double circulation route</h3>
             <p data-key="desc3">Simulating blood circulation.</p>
         </a>
 
@@ -119,6 +119,24 @@
             <h3 data-key="title5">Tubular Reabsorption</h3>
             <p data-key="desc5">Visualizing tubular reabsorption and urine formation.</p>
         </a>
+
+        <a href="autonomic_nervous_system_en.html" class="sim-card" id="card6">
+            <span class="badge" data-key="cat6">COORDINATION</span>
+            <h3 data-key="title6">Autonomic Nervous System</h3>
+            <p data-key="desc6">Simulating cardiac cycle and gas regulation control.</p>
+        </a>
+
+        <a href="spare1_en.html" class="sim-card" id="card7">
+            <span class="badge" data-key="cat7">SPARE</span>
+            <h3 data-key="title7">Spare Simulator 1</h3>
+            <p data-key="desc7">Placeholder for future simulator.</p>
+        </a>
+
+        <a href="spare2_en.html" class="sim-card" id="card8">
+            <span class="badge" data-key="cat8">SPARE</span>
+            <h3 data-key="title8">Spare Simulator 2</h3>
+            <p data-key="desc8">Placeholder for future simulator.</p>
+        </a>
     </div>
 
     <script>
@@ -132,6 +150,9 @@
                 cat3: "CIRCULATORY", title3: "Blood Circulation Navigator", desc3: "Simulating blood double circulations.",
                 cat4: "EXCRETORY", title4: "Ultrafiltration", desc4: "Interactive simulator for ultrafiltration in the Bowman's capsule.",
                 cat5: "EXCRETORY", title5: "Tubular Reabsorption", desc5: "Visualizing tubular reabsorption and urine formation.",
+                cat6: "COORDINATION", title6: "Autonomic Nervous System", desc6: "Simulating cardiac cycle and gas regulation control.",
+                cat7: "SPARE", title7: "Spare Simulator 1", desc7: "Placeholder for future simulator.",
+                cat8: "SPARE", title8: "Spare Simulator 2", desc8: "Placeholder for future simulator.",
                 suffix: "_en.html" // Link points to English files
             },
             cn: {
@@ -143,6 +164,9 @@
                 cat3: "循環系統", title3: "血液循環導航", desc3: "模擬血液的雙循環流動。",
                 cat4: "排泄系統", title4: "超濾作用", desc4: "模擬腎小囊中的超濾作用。",
                 cat5: "排泄系統", title5: "腎小管再吸收", desc5: "可視化再吸收與尿液形成過程。",
+                cat6: "協調系統", title6: "自主神經系統", desc6: "模擬心搏週期與氣體調節控制。",
+                cat7: "備用", title7: "備用模擬器 1", desc7: "未來模擬器的佔位符。",
+                cat8: "備用", title8: "備用模擬器 2", desc8: "未來模擬器的佔位符。",
                 suffix: "_cn.html" // Link points to Chinese files
             }
         };
@@ -173,6 +197,13 @@
             cards.forEach(card => {
                 let currentHref = card.getAttribute('href');
                 let baseName = currentHref.split('_')[0]; 
+                
+                // Keep the 'autonomic_nervous_system' base intact by slicing up to the last underscore
+                let lastUnderscoreIndex = currentHref.lastIndexOf('_');
+                if (lastUnderscoreIndex !== -1) {
+                    baseName = currentHref.substring(0, lastUnderscoreIndex);
+                }
+                
                 card.setAttribute('href', baseName + translations[lang].suffix);
             });
         }
