@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HKDSE Biology Simulator (Precise Cardiac Cycle - HD)</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #4dc9f6; margin-bottom: 10px;}
+        .controls { margin-bottom: 15px; }
+        button { background: #333; color: #fff; border: 1px solid #4dc9f6; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 5px; font-size: 16px; transition: 0.3s; }
+        button.active, button:hover { background: #4dc9f6; color: #000; }
+        
+        .info { display: flex; justify-content: center; gap: 40px; margin-bottom: 15px; font-size: 16px; background: #2b2b2b; padding: 10px; border-radius: 8px; width: 800px; margin-left: auto; margin-right: auto; border: 1px solid #444;}
+        .info span { font-weight: bold; color: #f67280; }
+        
+        canvas { background: #2b2b2b; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        .section-container { width: 800px; margin: 0 auto; margin-bottom: 15px; }
+        .row { display: flex; justify-content: space-between; width: 800px; margin: 0 auto 15px auto; gap: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>🫀 Neural Control & Organ Dynamics (HD Precise Version)</h1>
+    <div class="controls">
+        <button class="active" onclick="setMode('normal', this)">🧘 Normal Resting (Normal CO₂)</button>
+        <button onclick="setMode('exercise', this)">🏃 Vigorous Exercise (High CO₂)</button>
+    </div>
+
+    <div class="info">
+        <div>Blood CO₂ Level: <span id="co2Level">Normal</span></div>
+        <div>Sympathetic (Accel.): <span id="sympRate">Low</span></div>
+        <div>Parasympathetic (Decel.): <span id="paraRate" style="color:#4dc9f6;">High</span></div>
+    </div>
+
+    <div class="section-container">
+        <canvas id="nerveCanvas"></canvas>
+    </div>
+    
+    <div class="row">
+        <canvas id="heartWaveCanvas"></canvas>
+        <canvas id="heartOrganCanvas"></canvas>
+    </div>
+
+    <div class="row">
+        <canvas id="lungWaveCanvas"></canvas>
+        <canvas id="lungOrganCanvas"></canvas>
+    </div>
+
+    <script>
+        // --- High-DPI (Retina) Canvas Setup ---
+        function setupHighDPICanvas(canvasId, width, height) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Set actual internal canvas resolution multiplied by device pixel ratio
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            
+            // Set CSS display size to intended dimensions
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+            
+            // Normalize coordinate system to use css pixels
+            ctx.scale(dpr, dpr);
+            return ctx;
+        }
+
+        // --- State Configuration ---
+        let currentMode = 'normal';
+        let state = { sympathetic: 0.3, parasympathetic: 0.8, hrFreq: 0.05, brFreq: 0.02, tidalAmp: 30 };
+        let target = { ...state };
+
+        const modes = {
+            normal: { symp: 0.3, para: 0.8, hrFreq: 0.04, brFreq: 0.02, tidalAmp: 30, co2: "Normal" },
+            exercise: { symp: 1.0, para: 0.1, hrFreq: 0.12, brFreq: 0.06, tidalAmp: 60, co2: "High (Stimulates Chemoreceptors)" }
+        };
+
+        function setMode(mode, btn) {
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = mode;
+            let m = modes[mode];
+            target = { sympathetic: m.symp, parasympathetic: m.para, hrFreq: m.hrFreq, brFreq: m.brFreq, tidalAmp: m.tidalAmp };
+            
+            document.getElementById('co2Level').innerText = m.co2;
+            document.getElementById('sympRate').innerText = mode === 'normal' ? "Low" : "High (Heart Rate ↑)";
+            document.getElementById('paraRate').innerText = mode === 'normal' ? "High" : "Low (Inhibition Lifted)";
+            document.getElementById('sympRate').style.color = mode === 'normal' ? "#f67280" : "#ff4d4d";
+            document.getElementById('paraRate').style.color = mode === 'normal' ? "#4dc9f6" : "#aaa";
+        }
+
+        let hrPhase = 0;
+        let brPhase = 0;
+
+        // --- Initialize Contexts with High-DPI Scaling ---
+        const nerveCtx = setupHighDPICanvas('nerveCanvas', 800, 200);
+        const hwCtx = setupHighDPICanvas('heartWaveCanvas', 535, 180);
+        const hoCtx = setupHighDPICanvas('heartOrganCanvas', 250, 180);
+        const lwCtx = setupHighDPICanvas('lungWaveCanvas', 535, 180);
+        const loCtx = setupHighDPICanvas('lungOrganCanvas', 250, 180);
+
+        let pulses = [];
+
+        // --- Nerve Pathway Layer ---
+        function drawNerves() {
+            nerveCtx.clearRect(0, 0, 800, 200);
+            
+            function drawNode(x, y, label, color, radius = 30) {
+                nerveCtx.fillStyle = color; nerveCtx.beginPath(); nerveCtx.arc(x, y, radius, 0, Math.PI * 2); nerveCtx.fill();
+                nerveCtx.fillStyle = "#fff"; nerveCtx.font = "14px Arial"; nerveCtx.textAlign = "center"; nerveCtx.fillText(label, x, y + 5);
+            }
+
+            drawNode(150, 100, "Receptor", "#8e44ad");
+            drawNode(400, 100, "Medulla", "#d35400", 35);
+            drawNode(650, 50, "SA Node", "#f1c40f"); 
+            drawNode(650, 150, "Resp. Muscle", "#27ae60", 40);
+
+            nerveCtx.lineWidth = 3;
+            nerveCtx.strokeStyle = "#9b59b6"; nerveCtx.beginPath(); nerveCtx.moveTo(180, 100); nerveCtx.lineTo(365, 100); nerveCtx.stroke();
+            nerveCtx.strokeStyle = "#e74c3c"; 
+            nerveCtx.beginPath(); nerveCtx.moveTo(435, 90); nerveCtx.lineTo(620, 50); nerveCtx.stroke();
+            nerveCtx.beginPath(); nerveCtx.moveTo(435, 110); nerveCtx.lineTo(610, 150); nerveCtx.stroke();
+            nerveCtx.strokeStyle = "#3498db"; 
+            nerveCtx.beginPath(); nerveCtx.moveTo(435, 80); nerveCtx.quadraticCurveTo(525, 10, 620, 40); nerveCtx.stroke();
+
+            nerveCtx.fillStyle = "#aaa"; nerveCtx.fillText("Sensory Nerve", 275, 90);
+            nerveCtx.fillStyle = "#e74c3c"; nerveCtx.fillText("Sympathetic Nerve (Accel.)", 525, 110);
+            nerveCtx.fillStyle = "#3498db"; nerveCtx.fillText("Parasympathetic Nerve (Decel.)", 525, 20);
+
+            if (Math.random() < state.sympathetic * 0.2) {
+                pulses.push({ x: 435, y: 90, targetX: 620, targetY: 50, color: "#ff7675", speed: 4 }); 
+                pulses.push({ x: 435, y: 110, targetX: 610, targetY: 150, color: "#ff7675", speed: 4 }); 
+            }
+            if (Math.random() < state.parasympathetic * 0.2) {
+                pulses.push({ x: 435, y: 80, targetX: 620, targetY: 40, color: "#74b9ff", speed: 2, curve: true }); 
+            }
+
+            for (let i = pulses.length - 1; i >= 0; i--) {
+                let p = pulses[i];
+                if (p.curve) {
+                    p.x += p.speed;
+                    let t = (p.x - 435) / (620 - 435);
+                    p.y = (1-t)*(1-t)*80 + 2*(1-t)*t*10 + t*t*40; 
+                } else {
+                    let dx = p.targetX - p.x; let dy = p.targetY - p.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    p.x += (dx/dist) * p.speed; p.y += (dy/dist) * p.speed;
+                }
+                nerveCtx.fillStyle = p.color; nerveCtx.beginPath(); nerveCtx.arc(p.x, p.y, 5, 0, Math.PI * 2); nerveCtx.fill();
+                if (p.x >= p.targetX) pulses.splice(i, 1);
+            }
+        }
+
+        // --- Heart Electrical & Contraction Layer ---
+        let hrHistory = new Array(535).fill(120);
+
+        function drawHeartSection() {
+            state.hrFreq += (target.hrFreq - state.hrFreq) * 0.02;
+            hrPhase += state.hrFreq;
+
+            let beatProgress = (hrPhase % (Math.PI * 2)) / (Math.PI * 2);
+
+            hwCtx.clearRect(0, 0, 535, 180);
+            let hrValue = 120; 
+            
+            if (beatProgress > 0.00 && beatProgress < 0.10) {
+                let pPhase = (beatProgress - 0.00) / 0.10;
+                hrValue -= 15 * Math.sin(pPhase * Math.PI);
+            } else if (beatProgress > 0.18 && beatProgress < 0.26) {
+                if (beatProgress < 0.195) {
+                    let qPhase = (beatProgress - 0.18) / 0.015;
+                    hrValue += 12 * Math.sin(qPhase * Math.PI);
+                } else if (beatProgress < 0.23) {
+                    let rPhase = (beatProgress - 0.195) / 0.035;
+                    hrValue -= 85 * Math.sin(rPhase * Math.PI);
+                } else {
+                    let sPhase = (beatProgress - 0.23) / 0.03;
+                    hrValue += 20 * Math.sin(sPhase * Math.PI);
+                }
+            } else if (beatProgress > 0.40 && beatProgress < 0.52) {
+                let tPhase = (beatProgress - 0.40) / 0.12;
+                hrValue -= 20 * Math.sin(tPhase * Math.PI);
+            }
+            
+            hrHistory.push(hrValue); hrHistory.shift();
+
+            hwCtx.strokeStyle = "#ff7675"; hwCtx.lineWidth = 2; hwCtx.lineJoin = "round"; hwCtx.beginPath();
+            for(let i=0; i<535; i++) { i===0 ? hwCtx.moveTo(i, hrHistory[i]) : hwCtx.lineTo(i, hrHistory[i]); }
+            hwCtx.stroke();
+            
+            // Text rendering (now high res!)
+            hwCtx.fillStyle = "#ff7675"; hwCtx.font="bold 14px Arial"; hwCtx.textAlign="left"; hwCtx.fillText("ECG (Precise QRS Complex)", 10, 20);
+
+            hoCtx.clearRect(0, 0, 250, 180);
+            hoCtx.fillStyle = "#fff"; hoCtx.font="bold 14px Arial"; hoCtx.textAlign="center"; hoCtx.fillText("Independent Chamber Systole", 125, 20);
+            
+            let pivotX = -5, pivotY = 5;
+
+            // --- Atrial Systole ---
+            let atriaScaleX = 1, atriaScaleY = 1;
+            if (beatProgress > 0.05 && beatProgress < 0.18) { 
+                atriaScaleX = 0.85; atriaScaleY = 0.95;
+            } else if (beatProgress >= 0.18 && beatProgress < 0.25) { 
+                atriaScaleX = 1.05; atriaScaleY = 1.05;
+            }
+
+            hoCtx.save();
+            hoCtx.translate(125, 100);
+            hoCtx.translate(pivotX, pivotY); hoCtx.scale(atriaScaleX, atriaScaleY); hoCtx.translate(-pivotX, -pivotY);
+            
+            hoCtx.fillStyle = "rgba(146, 43, 33, 0.45)";
+            hoCtx.beginPath(); hoCtx.arc(-25, -15, 18, 0, Math.PI*2); hoCtx.fill(); 
+            hoCtx.beginPath(); hoCtx.arc(20, -15, 14, 0, Math.PI*2); hoCtx.fill(); 
+
+            hoCtx.strokeStyle = "rgba(241, 196, 15, 0.5)"; hoCtx.lineWidth = 3; hoCtx.lineCap = "round";
+            hoCtx.beginPath(); hoCtx.moveTo(-25, -25); hoCtx.lineTo(-5, 5); hoCtx.stroke();
+            hoCtx.fillStyle = "rgba(241, 196, 15, 0.5)";
+            hoCtx.beginPath(); hoCtx.arc(-25, -25, 5, 0, Math.PI*2); hoCtx.fill();
+            hoCtx.beginPath(); hoCtx.arc(-5, 5, 5, 0, Math.PI*2); hoCtx.fill(); 
+
+            if (beatProgress < 0.05) {
+                hoCtx.fillStyle = "#f1c40f"; hoCtx.shadowBlur = 10; hoCtx.shadowColor = "#f1c40f";
+                hoCtx.beginPath(); hoCtx.arc(-25, -25, 6, 0, Math.PI*2); hoCtx.fill();
+                hoCtx.shadowBlur = 0;
+            } else if (beatProgress >= 0.05 && beatProgress < 0.10) {
+                let t = (beatProgress - 0.05) / 0.05;
+                let curX = -25 + (-5 - -25) * t;
+                let curY = -25 + (5 - -25) * t;
+                hoCtx.fillStyle = "#f1c40f"; hoCtx.shadowBlur = 10; hoCtx.shadowColor = "#f1c40f";
+                hoCtx.beginPath(); hoCtx.arc(curX, curY, 4, 0, Math.PI*2); hoCtx.fill();
+                hoCtx.shadowBlur = 0;
+            } else if (beatProgress >= 0.10 && beatProgress < 0.18) {
+                hoCtx.fillStyle = "#f1c40f"; hoCtx.shadowBlur = 10; hoCtx.shadowColor = "#f1c40f";
+                hoCtx.beginPath(); hoCtx.arc(-5, 5, 6, 0, Math.PI*2); hoCtx.fill();
+                hoCtx.shadowBlur = 0;
+            }
+            hoCtx.restore();
+
+            // --- Ventricular Systole ---
+            let ventScaleX = 1, ventScaleY = 1;
+            if (beatProgress > 0.18 && beatProgress < 0.40) { 
+                ventScaleX = 0.85; ventScaleY = 0.95;
+            } else if (beatProgress >= 0.40 && beatProgress < 0.50) { 
+                ventScaleX = 1.05; ventScaleY = 1.05;
+            }
+
+            hoCtx.save();
+            hoCtx.translate(125, 100);
+            hoCtx.translate(pivotX, pivotY); hoCtx.scale(ventScaleX, ventScaleY); hoCtx.translate(-pivotX, -pivotY);
+
+            hoCtx.fillStyle = "rgba(192, 57, 43, 0.55)";
+            hoCtx.beginPath();
+            hoCtx.moveTo(-35, -5);
+            hoCtx.bezierCurveTo(-45, 30, -20, 55, 5, 65); 
+            hoCtx.bezierCurveTo(35, 45, 35, 10, 25, -10); 
+            hoCtx.fill();
+
+            let bundleHis = {x: -5, y: 20};
+            let rightApex = {x: -2, y: 58}; 
+            let leftApex = {x: 6, y: 58};
+
+            hoCtx.strokeStyle = "rgba(241, 196, 15, 0.5)"; hoCtx.lineWidth = 3; hoCtx.lineCap = "round";
+            hoCtx.beginPath(); hoCtx.moveTo(-5, 5); hoCtx.lineTo(bundleHis.x, bundleHis.y); hoCtx.stroke();
+            hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(rightApex.x, rightApex.y); hoCtx.stroke();
+            hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(leftApex.x, leftApex.y); hoCtx.stroke();
+
+            hoCtx.beginPath(); hoCtx.moveTo(rightApex.x, rightApex.y);
+            hoCtx.bezierCurveTo(-20, 50, -42, 30, -32, 0); 
+            hoCtx.stroke();
+
+            hoCtx.beginPath(); hoCtx.moveTo(leftApex.x, leftApex.y);
+            hoCtx.bezierCurveTo(20, 50, 32, 30, 25, 0); 
+            hoCtx.stroke();
+
+            if (beatProgress >= 0.18 && beatProgress < 0.23) {
+                let t = (beatProgress - 0.18) / 0.05;
+                let curRX = bundleHis.x + (rightApex.x - bundleHis.x) * t;
+                let curRY = bundleHis.y + (rightApex.y - bundleHis.y) * t;
+                let curLX = bundleHis.x + (leftApex.x - bundleHis.x) * t;
+                let curLY = bundleHis.y + (leftApex.y - bundleHis.y) * t;
+
+                hoCtx.fillStyle = "#f1c40f"; hoCtx.shadowBlur = 10; hoCtx.shadowColor = "#f1c40f";
+                hoCtx.beginPath(); hoCtx.arc(curRX, curRY, 4, 0, Math.PI*2); hoCtx.fill();
+                hoCtx.beginPath(); hoCtx.arc(curLX, curLY, 4, 0, Math.PI*2); hoCtx.fill();
+                hoCtx.strokeStyle = "#f1c40f";
+                hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(curRX, curRY); hoCtx.stroke();
+                hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(curLX, curLY); hoCtx.stroke();
+                hoCtx.shadowBlur = 0;
+            } else if (beatProgress >= 0.23 && beatProgress < 0.30) {
+                let t = (beatProgress - 0.23) / 0.07;
+                hoCtx.strokeStyle = "#00d2d3"; hoCtx.shadowColor = "#00d2d3"; hoCtx.shadowBlur = 10;
+
+                hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(rightApex.x, rightApex.y); hoCtx.stroke();
+                hoCtx.beginPath(); hoCtx.moveTo(bundleHis.x, bundleHis.y); hoCtx.lineTo(leftApex.x, leftApex.y); hoCtx.stroke();
+
+                hoCtx.beginPath(); hoCtx.moveTo(rightApex.x, rightApex.y);
+                hoCtx.bezierCurveTo(rightApex.x + (-20 - rightApex.x)*t, rightApex.y + (50 - rightApex.y)*t,
+                                    rightApex.x + (-42 - rightApex.x)*t, rightApex.y + (30 - rightApex.y)*t,
+                                    rightApex.x + (-32 - rightApex.x)*t, rightApex.y + (0 - rightApex.y)*t);
+                hoCtx.stroke();
+
+                hoCtx.beginPath(); hoCtx.moveTo(leftApex.x, leftApex.y);
+                hoCtx.bezierCurveTo(leftApex.x + (20 - leftApex.x)*t, leftApex.y + (50 - leftApex.y)*t,
+                                    leftApex.x + (32 - leftApex.x)*t, leftApex.y + (30 - leftApex.y)*t,
+                                    leftApex.x + (25 - leftApex.x)*t, leftApex.y + (0 - leftApex.y)*t);
+                hoCtx.stroke();
+                hoCtx.shadowBlur = 0;
+            }
+            hoCtx.restore();
+        }
+
+        // --- Lungs Layer ---
+        let brHistory = new Array(535).fill(90);
+
+        function drawLungSection() {
+            state.brFreq += (target.brFreq - state.brFreq) * 0.02;
+            state.tidalAmp += (target.tidalAmp - state.tidalAmp) * 0.02;
+            brPhase += state.brFreq;
+
+            lwCtx.clearRect(0, 0, 535, 180);
+            let brValue = 90 - state.tidalAmp * Math.sin(brPhase); 
+            brHistory.push(brValue); brHistory.shift();
+
+            lwCtx.strokeStyle = "#55efc4"; lwCtx.lineWidth = 2; lwCtx.beginPath();
+            for(let i=0; i<535; i++) { i===0 ? lwCtx.moveTo(i, brHistory[i]) : lwCtx.lineTo(i, brHistory[i]); }
+            lwCtx.stroke();
+            
+            // Text rendering (now high res!)
+            lwCtx.fillStyle = "#55efc4"; lwCtx.font="bold 14px Arial"; lwCtx.textAlign="left"; lwCtx.fillText("Tidal Volume (Depth & Rate)", 10, 20);
+
+            loCtx.clearRect(0, 0, 250, 180);
+            loCtx.fillStyle = "#fff"; loCtx.font="bold 14px Arial"; loCtx.textAlign="center"; loCtx.fillText("Lungs (Trachea & Cardiac Notch)", 125, 20);
+            
+            loCtx.save();
+            loCtx.translate(125, 30); 
+            
+            let baseScale = 0.82; 
+            let inflation = baseScale + (Math.sin(brPhase) * (state.tidalAmp / 280)); 
+            loCtx.scale(inflation, inflation);
+
+            loCtx.fillStyle = "#bdc3c7"; loCtx.fillRect(-8, 0, 16, 45);
+            
+            loCtx.beginPath(); loCtx.moveTo(-8, 40); loCtx.lineTo(-25, 60); loCtx.lineTo(-15, 65); loCtx.lineTo(0, 45); loCtx.fill();
+            loCtx.beginPath(); loCtx.moveTo(8, 40); loCtx.lineTo(25, 60); loCtx.lineTo(15, 65); loCtx.lineTo(0, 45); loCtx.fill();
+
+            loCtx.fillStyle = "#e08283"; 
+            
+            loCtx.beginPath();
+            loCtx.moveTo(-15, 45);
+            loCtx.bezierCurveTo(-50, 35, -60, 80, -50, 115); 
+            loCtx.bezierCurveTo(-30, 125, -10, 115, -5, 100); 
+            loCtx.bezierCurveTo(-5, 80, -10, 60, -15, 45); 
+            loCtx.fill();
+
+            loCtx.beginPath();
+            loCtx.moveTo(15, 45);
+            loCtx.bezierCurveTo(50, 35, 60, 80, 50, 115); 
+            loCtx.bezierCurveTo(30, 125, 15, 115, 10, 85); 
+            loCtx.bezierCurveTo(25, 75, 15, 55, 15, 45); 
+            loCtx.fill();
+
+            loCtx.strokeStyle = "rgba(255,255,255,0.15)";
+            loCtx.lineWidth = 1;
+            loCtx.beginPath(); loCtx.moveTo(-35, 70); loCtx.quadraticCurveTo(-20, 90, -40, 105); loCtx.stroke();
+            loCtx.beginPath(); loCtx.moveTo(35, 70); loCtx.quadraticCurveTo(45, 90, 30, 105); loCtx.stroke();
+
+            loCtx.restore();
+        }
+
+        function animate() {
+            state.sympathetic += (target.sympathetic - state.sympathetic) * 0.05;
+            state.parasympathetic += (target.parasympathetic - state.parasympathetic) * 0.05;
+
+            drawNerves();
+            drawHeartSection();
+            drawLungSection();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
