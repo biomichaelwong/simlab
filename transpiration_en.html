@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-HK">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biology: Transpiration Simulator (Limiting Factors)</title>
+    <title>Biology: Transpiration Mechanism Simulator (Limiting Factors)</title>
     <style>
         :root {
             --light-intensity: 50;
@@ -216,8 +216,8 @@
             background: #fdfefe; border: 3px solid #95a5a6; border-radius: 50%;
             display: flex; flex-direction: column; overflow: hidden; z-index: 6;
         }
-        .xylem { flex: 1; background: #f5b7b1; border-bottom: 2px solid #bdc3c7; display: flex; align-items: center; justify-content: center; font-size: 0.65em; font-weight: bold; color: #c0392b; }
-        .phloem { flex: 1; background: #aed6f1; display: flex; align-items: center; justify-content: center; font-size: 0.65em; font-weight: bold; color: #2980b9; }
+        .xylem { flex: 1; background: #f5b7b1; border-bottom: 2px solid #bdc3c7; display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: bold; color: #c0392b; }
+        .phloem { flex: 1; background: #aed6f1; display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: bold; color: #2980b9; }
 
         .spongy-cell {
             position: absolute; background-color: #58d68d;
@@ -264,7 +264,10 @@
         .water-vapor {
             position: absolute; 
             width: 10px; height: 10px;
-            background: radial-gradient(circle, #85c1e9, #3498db); border-radius: 50%;
+            background: radial-gradient(circle, #85c1e9, #3498db); 
+            border-radius: 50%;
+            border: 1.5px solid #1a5276;
+            box-sizing: border-box;
             animation-name: evaporate;
             animation-timing-function: cubic-bezier(0.55, 0.05, 0.68, 0.19);
             animation-fill-mode: forwards;
@@ -314,7 +317,7 @@
     <div class="main-wrapper">
         <div class="top-section">
             <div class="controls">
-                <h3 style="margin:0 0 10px 0; color:#2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom:8px;">Environmental Factors</h3>
+                <h3 style="margin:0 0 10px 0; color:#2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom:8px;">Environmental Factors Control</h3>
                 
                 <div class="sliders-grid">
                     <div class="control-group">
@@ -326,13 +329,13 @@
                     <div class="control-group">
                         <label for="temp">Temperature: <span id="temp-val">25</span>°C</label>
                         <input type="range" id="temp" min="10" max="40" value="25">
-                        <small>Affects water's kinetic energy</small>
+                        <small>Affects kinetic energy of water molecules</small>
                     </div>
 
                     <div class="control-group">
                         <label for="wind">Wind Speed: <span id="wind-val">20</span> km/h</label>
                         <input type="range" id="wind" min="0" max="100" value="20">
-                        <small>Removes water vapour</small>
+                        <small>Removes water vapour around stomata</small>
                     </div>
 
                     <div class="control-group">
@@ -402,7 +405,7 @@
             <div class="dashboard-header">
                 <h3 style="margin:0; color:#2c3e50;">📊 Data Analysis (Limiting Factors Model)</h3>
                 <span style="font-size: 0.85em; color: #7f8c8d;">
-                    If increasing a factor no longer raises the rate, a plateau has been reached.
+                    When increasing a factor no longer increases the rate, a plateau is reached.
                 </span>
             </div>
             <canvas id="graphCanvas"></canvas>
@@ -562,7 +565,7 @@
             let turgidityExplanation = "";
             if (temp >= 36) {
                 turgidityFactor = Math.max(0, 1 - ((temp - 35) / 4));
-                turgidityExplanation = "⚠️ Extremely high temperature: Rapid water loss causes guard cells to lose turgidity, forcing stomata to close.";
+                turgidityExplanation = "⚠️ Extremely high temperature. Rapid water loss causes guard cells to lose turgidity, forcing stomata to close.";
                 document.getElementById('guard-left').style.transform = `scaleY(${0.7 + (turgidityFactor * 0.3)})`;
                 document.getElementById('guard-right').style.transform = `scaleY(${0.7 + (turgidityFactor * 0.3)})`;
             } else {
@@ -594,7 +597,7 @@
             let potentials = {
                 'Light Intensity (Stomatal Aperture)': pot_light,
                 'Temperature (Evaporation Rate)': pot_temp,
-                'Wind Speed (Water Vapour Removal)': pot_wind,
+                'Wind Speed (Boundary Layer Removal)': pot_wind,
                 'Relative Humidity (Concentration Gradient)': pot_humidity
             };
 
@@ -606,11 +609,11 @@
 
             let explanation = "";
             if (turgidityExplanation !== "") {
-                explanation = turgidityExplanation + "<br>📝 Rate has dropped to a minimum.<br>Current limiting factor: <span class='limiting-factor-highlight'>Guard Cell Turgidity</span>";
+                explanation = turgidityExplanation + "<br>📝 Rate has hit rock bottom.<br>Current limiting factor: <span class='limiting-factor-highlight'>Guard Cell Turgidity</span>";
             } else if (currentRateValue <= 5) {
                 explanation = `📝 Transpiration has almost stopped.<br>Current limiting factor: <span class='limiting-factor-highlight'>${limitingFactor}</span>`;
             } else {
-                explanation = `📝 Overall rate is determined by the most scarce condition. Even if other factors increase, the rate will plateau.<br>Current limiting factor: <span class='limiting-factor-highlight'>${limitingFactor}</span>`;
+                explanation = `📝 The overall rate is determined by the most deficient condition. Increasing other factors will only lead to a plateau.<br>Current limiting factor: <span class='limiting-factor-highlight'>${limitingFactor}</span>`;
             }
             explanationBox.innerHTML = explanation;
 
@@ -618,7 +621,7 @@
             if (gap < 10 && temp > 15) vaporConcentration += 0.5 * (temp / 40); 
             root.style.setProperty('--internal-haze', Math.min(1, Math.max(0, vaporConcentration)) * 0.8);
 
-            if (currentRateValue < 5) rateDisplay.innerText = "Near zero";
+            if (currentRateValue < 5) rateDisplay.innerText = "Near Zero";
             else if (currentRateValue < 30) rateDisplay.innerText = "Low";
             else if (currentRateValue < 65) rateDisplay.innerText = "Medium";
             else rateDisplay.innerText = "High";

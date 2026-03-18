@@ -264,9 +264,11 @@
         .water-vapor {
             position: absolute; 
             width: 10px; height: 10px;
-            background: radial-gradient(circle, #85c1e9, #3498db); border-radius: 50%;
+            background: radial-gradient(circle, #85c1e9, #3498db); 
+            border-radius: 50%;
+            border: 1.5px solid #1a5276; /* 加入深藍色邊框讓水分子更容易觀察 */
+            box-sizing: border-box;
             animation-name: evaporate;
-            /* 修改為更具指數加速感的貝茲曲線 */
             animation-timing-function: cubic-bezier(0.55, 0.05, 0.68, 0.19);
             animation-fill-mode: forwards;
             opacity: 0; z-index: 16;
@@ -368,7 +370,7 @@
                         <div class="palisade-cell"></div><div class="palisade-cell"></div>
                         <div class="palisade-cell"></div><div class="palisade-cell"></div>
                         <div class="palisade-cell"></div><div class="palisade-cell"></div>
-                        <div class="leaf-label leaf-label-palisade">柵欄組織</div>
+                        <div class="leaf-label leaf-label-palisade">柵狀葉肉組織</div>
                     </div>
 
                     <div class="haze-layer" id="haze-layer"></div>
@@ -379,7 +381,7 @@
                             <div class="phloem">韌皮部</div>
                         </div>
 
-                        <div class="leaf-label leaf-label-spongy">海綿組織</div>
+                        <div class="leaf-label leaf-label-spongy">海綿葉肉組織</div>
                         <div class="leaf-label leaf-label-air">氣室</div>
                     </div>
 
@@ -433,7 +435,6 @@
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 增加數據採樣點以平滑曲線
         let dataHistory = new Array(200).fill(0); 
 
         let currentRateValue = 0;
@@ -647,11 +648,9 @@
         function createWaterVapor() {
             if (spongyCellsList.length === 0) return;
             
-            // 基礎生成數量
             let baseCount = Math.max(1, currentRateValue / 25);
             let particleCount = 1;
             
-            // 指數型增長倍率
             if (currentRateValue < 30) {
                 particleCount = Math.ceil(baseCount * 1.3);
             } else if (currentRateValue < 65) {
@@ -696,7 +695,6 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 增加 Y 軸參考線數量，縮小間距
             ctx.strokeStyle = '#ecf0f1';
             ctx.lineWidth = 1;
             for(let i=1; i<10; i++) {
@@ -736,7 +734,6 @@
         
         requestAnimationFrame(particleLoop);
         
-        // 將圖表更新頻率提高為 100ms，讓曲線更平滑
         setInterval(drawGraph, 100); 
     </script>
 </body>
