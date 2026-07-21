@@ -9,6 +9,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* Floating back button */
+    #backBtn {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: calc(env(safe-area-inset-left, 0px) + 10px);
+    z-index: 1000;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    }
+   
     /* --- Mobile touch & safe-area tuning --- */
     html, body {
       -webkit-text-size-adjust: 100%;
