@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Interactive Heart Anatomy & Cardiac Cycle</title>
+<title>互動式心臟解剖學與心搏週期</title>
 
 <script type="importmap">
 {
@@ -46,6 +46,11 @@ input[type="range"] {
   display: grid;
   grid-template-columns: 292px 1fr;
   height: 100dvh;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#app.collapsed {
+  grid-template-columns: 0px 1fr !important;
 }
 
 aside {
@@ -54,6 +59,17 @@ aside {
   background: #101825;
   border-right: 1px solid #29374b;
   z-index: 5;
+  min-width: 0;
+  transition: padding 0.3s ease, opacity 0.25s ease;
+  white-space: nowrap;
+}
+
+#app.collapsed aside {
+  padding: 0;
+  overflow: hidden;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 h1 {
@@ -149,12 +165,6 @@ input[type="range"] {
   margin-bottom: 6px;
 }
 
-.note {
-  margin-top: 17px;
-  border-top: 1px solid #2b3a50;
-  padding-top: 13px;
-}
-
 main {
   position: relative;
   min-width: 0;
@@ -175,8 +185,40 @@ canvas {
   right: 24px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 14px;
   pointer-events: none;
+  z-index: 6;
+}
+
+.toggle-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #101825e6;
+  border: 1px solid #354963;
+  color: #76e2ca;
+  font-weight: 800;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background: #1a283b;
+  color: #ffffff;
+  border-color: #76e2ca;
+}
+
+#toggleIcon {
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
 }
 
 .topbar h2 {
@@ -496,45 +538,44 @@ canvas {
 </head>
 
 <body>
-<div id="app">
+<div id="app" class="collapsed">
 
   <aside>
-    <div class="eyebrow">Interactive cardiac atlas</div>
+    <div class="eyebrow">互動式心臟地圖</div>
 
-    <h1>One heart. Four chambers.</h1>
+    <h1>一個心臟。<br>四個腔室。</h1>
 
     <div class="muted">
-      Explore cardiac anatomy, electrical activation and blood movement.
+      探索心臟解剖結構、電傳導<br>激活過程及血液流動。
     </div>
 
-    <div class="section">View</div>
+    <div class="section">視角</div>
 
     <div class="buttons">
-      <button id="anterior">Anterior</button>
-      <button id="posterior">Posterior</button>
-      <button id="reset">Reset</button>
+      <button id="anterior">前視角</button>
+      <button id="posterior">後視角</button>
     </div>
 
     <label class="layer">
       <input id="ghost" type="checkbox" checked>
-      Transparent myocardium
+      半透明心肌
     </label>
 
     <label class="layer">
       <input id="showLabels" type="checkbox" checked>
-      Structure labels
+      結構標籤
     </label>
 
-    <div class="section">Dissection</div>
+    <div class="section">解剖剖切</div>
 
     <div class="row range-label">
-      <span>Anterior tissue removal</span>
+      <span>前側組織剖切</span>
       <span id="cutValue">0%</span>
     </div>
 
     <input
       id="cut"
-      aria-label="Anterior tissue removal"
+      aria-label="前側組織剖切"
       type="range"
       min="0"
       max="100"
@@ -542,53 +583,48 @@ canvas {
     >
 
     <div class="buttons" style="margin-top:7px">
-      <button id="inspectSeptum">Inspect septum</button>
-      <button id="wholeHeart">Whole organ</button>
+      <button id="inspectSeptum">觀察室間隔</button>
+      <button id="wholeHeart">完整器官</button>
     </div>
 
     <div class="section row">
-      <span>Anatomical layers</span>
-      <button id="showAll">All</button>
+      <span>解剖圖層</span>
+      <button id="showAll">全部顯示</button>
     </div>
 
     <div id="layerList"></div>
 
-    <div class="section">Blood visualization</div>
+    <div class="section">血液流動視覺化</div>
 
     <label class="layer">
       <input id="showBlood" type="checkbox" checked>
-      Blood volume and movement
-    </label>
-
-    <label class="layer">
-      <input id="showTracers" type="checkbox" checked>
-      Directional flow tracers
+      血液流動
     </label>
 
     <div class="row range-label" style="margin-top:10px">
-      <span>Blood visibility</span>
+      <span>血液可見度</span>
       <span id="bloodValue">35%</span>
     </div>
 
     <input
       id="bloodOpacity"
-      aria-label="Blood visibility"
+      aria-label="血液可見度"
       type="range"
       min="0"
       max="100"
       value="35"
     >
 
-    <div class="section">Simulation</div>
+    <div class="section">模擬設定</div>
 
     <div class="row range-label">
-      <span>SA firing rate</span>
+      <span>竇房結起搏速率</span>
       <span id="rateValue">70 BPM</span>
     </div>
 
     <input
       id="rate"
-      aria-label="SA firing rate"
+      aria-label="竇房結起搏速率"
       type="range"
       min="40"
       max="120"
@@ -596,98 +632,83 @@ canvas {
     >
 
     <div class="row range-label" style="margin-top:11px">
-      <span>Playback speed</span>
-      <span id="speedValue">0.25×</span>
+      <span>播放速度</span>
+      <span id="speedValue">0.20×</span>
     </div>
 
     <input
       id="speed"
-      aria-label="Playback speed"
+      aria-label="播放速度"
       type="range"
       min="0.1"
       max="1"
       step="0.05"
-      value="0.25"
+      value="0.2"
     >
-
-    <div class="muted note">
-      Drag to rotate · Scroll/pinch to zoom · Right-drag to pan.
-      <br><br>
-
-      The conduction structures move with the cardiac walls.
-      The His bundle is embedded in the septum.
-      <br><br>
-
-      BPM changes the interval between SA-node impulses,
-      not the modeled conduction speed.
-      <br><br>
-
-      Blood is shown in red and dark red. Tracers indicate
-      flow direction, not individual blood cells.
-      <br><br>
-
-      Educational procedural model. Not clinically validated.
-      Blood movement is illustrative, not a computational
-      fluid-dynamics simulation.
-    </div>
   </aside>
 
   <main>
     <canvas
       id="scene"
-      aria-label="Interactive cardiac anatomy"
+      aria-label="互動式心臟解剖學"
     ></canvas>
 
     <div id="labels"></div>
 
     <div id="loading">
-      Building continuous myocardial geometry…
+      正在建構心肌幾何模型…
     </div>
 
     <div class="topbar">
-      <div>
-        <div class="eyebrow">Anatomy / electrophysiology / flow</div>
-        <h2>The cardiac cycle</h2>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <button id="sidebarToggle" class="toggle-btn" aria-label="切換面板" aria-expanded="false">
+          <span id="toggleIcon">»</span>
+          <span>控制面板</span>
+        </button>
+        <div>
+          <div class="eyebrow">解剖學 / 電生理學 / 血流</div>
+          <h2>心臟週期</h2>
+        </div>
       </div>
 
-      <div class="badge">EDUCATIONAL PROTOTYPE</div>
+      <div class="badge">教學原型模組</div>
     </div>
 
     <div class="legend">
       <span>
         <i class="dot" style="background:#c65c72"></i>
-        Myocardium
+        心肌
       </span>
 
       <span>
         <i class="dot" style="background:#ffe09c"></i>
-        Conduction anatomy
+        傳導系統結構
       </span>
 
       <span>
         <i class="dot" style="background:#e13645"></i>
-        Oxygenated blood
+        含氧血
       </span>
 
       <span>
         <i class="dot" style="background:#741c36"></i>
-        Deoxygenated blood
+        缺氧血
       </span>
     </div>
 
     <div class="bottom">
       <div class="playback">
-        <button id="play" class="primary">▶ Play</button>
+        <button id="play" class="primary">▶ 播放</button>
 
-        <button id="restart" aria-label="Restart cardiac cycle">
+        <button id="restart" aria-label="重新開始心臟週期">
           ↺
         </button>
 
         <div class="phase">
-          <div id="phaseName">Atrial systole</div>
+          <div id="phaseName">心房收縮期</div>
 
           <div id="phaseDescription">
-            The atria contract, pushing blood into the ventricles.
+            心房收縮，將血液泵入心室。
           </div>
         </div>
 
@@ -698,13 +719,13 @@ canvas {
       </div>
 
       <div class="timeline-heading">
-        <span id="elapsed">Cycle time: 0 ms</span>
-        <span id="interval">Cycle duration: 857 ms</span>
+        <span id="elapsed">週期時間：0 毫秒</span>
+        <span id="interval">週期時長：857 毫秒</span>
       </div>
 
       <input
         id="timeline"
-        aria-label="Cardiac cycle position"
+        aria-label="心臟週期位置"
         type="range"
         min="0"
         max="1000"
@@ -713,28 +734,28 @@ canvas {
 
       <div
         id="markers"
-        aria-label="The three stages of the cardiac cycle"
+        aria-label="心臟週期的三個階段"
       ></div>
 
       <div class="statuses">
         <div class="status">
-          Atria
-          <b id="atrialStatus">Relaxed</b>
+          心房
+          <b id="atrialStatus">舒張</b>
         </div>
 
         <div class="status">
-          Ventricles
-          <b id="ventStatus">Relaxed</b>
+          心室
+          <b id="ventStatus">舒張</b>
         </div>
 
         <div class="status">
-          Mitral / tricuspid
-          <b id="avStatus">Open</b>
+          二尖瓣 / 三尖瓣
+          <b id="avStatus">開啟</b>
         </div>
 
         <div class="status">
-          Aortic / pulmonary
-          <b id="slStatus">Closed</b>
+          主動脈瓣 / 肺動脈瓣
+          <b id="slStatus">關閉</b>
         </div>
       </div>
     </div>
@@ -776,6 +797,20 @@ const ss = (a, b, x) =>
   THREE.MathUtils.smoothstep(x, a, b);
 
 // ============================================================
+// Panel toggle controller
+// ============================================================
+
+const app = $("app");
+const sidebarToggle = $("sidebarToggle");
+const toggleIcon = $("toggleIcon");
+
+sidebarToggle.addEventListener("click", () => {
+  const isCollapsed = app.classList.toggle("collapsed");
+  toggleIcon.textContent = isCollapsed ? "»" : "«";
+  sidebarToggle.setAttribute("aria-expanded", !isCollapsed);
+});
+
+// ============================================================
 // Renderer and scene
 // ============================================================
 
@@ -788,7 +823,7 @@ try {
   });
 } catch (error) {
   $("loading").textContent =
-    "WebGL could not start. Try enabling hardware acceleration.";
+    "無法啟動 WebGL。請嘗試開啟硬體加速。";
   throw error;
 }
 
@@ -976,12 +1011,6 @@ const wallMaterial = tissueMaterial(
   0.27
 );
 
-/*
-  The myocardium is a single mesh.
-
-  Region visibility hides selected parts of that mesh without
-  representing the heart as four independent chamber surfaces.
-*/
 wallMaterial.onBeforeCompile = shader => {
   shader.uniforms.uWallFlags = wallFlags;
 
@@ -1064,17 +1093,6 @@ const tendonMaterial = new THREE.LineBasicMaterial({
 // ============================================================
 // Common anatomical deformation field
 // ============================================================
-
-/*
-  Each anatomical vertex has reference-space atrial and
-  ventricular displacement vectors.
-
-  The same mapping is applied to the muscle, conduction
-  structures, valves, tendons and blood surfaces.
-
-  This is an illustrative kinematic model, not a finite-element
-  or incompressible myocardial mechanics solver.
-*/
 
 function displacementBasis(x, y, z, outA, outV) {
   const side = ss(-0.08, 0.12, x);
@@ -1421,7 +1439,6 @@ function myocardiumField(x, y, z) {
     );
   }
 
-  // Connections through the atrioventricular junctions.
   cavity = smoothMinimum(
     cavity,
     ellipsoidSDF(
@@ -1442,7 +1459,6 @@ function myocardiumField(x, y, z) {
     0.055
   );
 
-  // Ventricular outflow connections.
   cavity = smoothMinimum(
     cavity,
     ellipsoidSDF(
@@ -1585,11 +1601,11 @@ function buildMyocardium() {
 const myocardium = buildMyocardium();
 
 [
-  "Right atrial wall",
-  "Left atrial wall",
-  "Right ventricular wall",
-  "Left ventricular wall",
-  "Interventricular septum"
+  "右心房壁",
+  "左心房壁",
+  "右心室壁",
+  "左心室壁",
+  "室間隔"
 ].forEach((name, index) => {
   layerControl(
     name,
@@ -1605,7 +1621,7 @@ const myocardium = buildMyocardium();
 // ============================================================
 
 const vessels = makeLayer(
-  "Great vessels",
+  "大血管",
   0xb47584
 );
 
@@ -1774,7 +1790,7 @@ function addLabel(
 }
 
 addLabel(
-  "Right atrium",
+  "右心房",
   [-1.03, 1.04, 0.13],
   null,
   false,
@@ -1782,7 +1798,7 @@ addLabel(
 );
 
 addLabel(
-  "Left atrium",
+  "左心房",
   [1.03, 1.15, -0.05],
   null,
   false,
@@ -1790,7 +1806,7 @@ addLabel(
 );
 
 addLabel(
-  "Right ventricle",
+  "右心室",
   [-1.06, -0.47, 0.28],
   null,
   false,
@@ -1798,7 +1814,7 @@ addLabel(
 );
 
 addLabel(
-  "Left ventricle",
+  "左心室",
   [1.01, -0.58, 0.14],
   null,
   false,
@@ -1806,7 +1822,7 @@ addLabel(
 );
 
 addLabel(
-  "Septum",
+  "室間隔",
   [0.04, -0.47, 0.23],
   null,
   false,
@@ -1814,7 +1830,7 @@ addLabel(
 );
 
 addLabel(
-  "Aorta",
+  "主動脈",
   [0.31, 2.10, -0.22],
   vessels
 );
@@ -1968,7 +1984,7 @@ function createValve(
 }
 
 const tricuspid = createValve(
-  "Tricuspid valve",
+  "三尖瓣",
   [-0.50, 0.55, 0.06],
   0.222,
   3,
@@ -1976,7 +1992,7 @@ const tricuspid = createValve(
 );
 
 const mitral = createValve(
-  "Mitral valve",
+  "二尖瓣",
   [0.49, 0.57, -0.17],
   0.213,
   2,
@@ -1984,7 +2000,7 @@ const mitral = createValve(
 );
 
 const aortic = createValve(
-  "Aortic valve",
+  "主動脈瓣",
   [0.23, 0.73, -0.22],
   0.148,
   3,
@@ -1992,7 +2008,7 @@ const aortic = createValve(
 );
 
 const pulmonary = createValve(
-  "Pulmonary valve",
+  "肺動脈瓣",
   [-0.43, 0.73, 0.35],
   0.138,
   3,
@@ -2000,13 +2016,13 @@ const pulmonary = createValve(
 );
 
 addLabel(
-  "Tricuspid",
+  "三尖瓣",
   [-0.69, 0.55, 0.32],
   tricuspid.group
 );
 
 addLabel(
-  "Mitral",
+  "二尖瓣",
   [0.69, 0.58, 0.12],
   mitral.group
 );
@@ -2016,12 +2032,12 @@ addLabel(
 // ============================================================
 
 const tendons = makeLayer(
-  "Chordae tendineae",
+  "心腱索",
   0xf1dcb9
 );
 
 const papillary = makeLayer(
-  "Papillary muscles",
+  "乳頭肌",
   0xd08089
 );
 
@@ -2107,32 +2123,32 @@ addChordae(tricuspid, "rv", 3);
 // ============================================================
 
 const saGroup = makeLayer(
-  "SA node",
+  "竇房結",
   COLORS.conduction
 );
 
 const avGroup = makeLayer(
-  "AV node",
+  "房室結",
   COLORS.conduction
 );
 
 const hisGroup = makeLayer(
-  "His bundle — intraseptal",
+  "希氏束",
   COLORS.conduction
 );
 
 const bundleGroup = makeLayer(
-  "Right / left bundle branches",
+  "右 / 左束支",
   COLORS.conduction
 );
 
 const purkinjeGroup = makeLayer(
-  "Purkinje fibres",
+  "浦金耶纖維",
   COLORS.conduction
 );
 
 const atrialPaths = makeLayer(
-  "Atrial activation paths",
+  "心房傳導路徑",
   0xcfb47d
 );
 
@@ -2170,28 +2186,28 @@ attachedMesh(
 );
 
 addLabel(
-  "SA node",
+  "竇房結",
   [-0.88, 1.49, 0.17],
   saGroup,
   true
 );
 
 addLabel(
-  "AV node",
+  "房室結",
   [-0.14, 0.73, 0.15],
   avGroup,
   true
 );
 
 addLabel(
-  "His · within septum",
+  "希氏束 ",
   [0.08, 0.31, 0.13],
   hisGroup,
   true
 );
 
 addLabel(
-  "Purkinje network",
+  "浦金耶纖維",
   [0.79, -0.91, 0.24],
   purkinjeGroup,
   true
@@ -2206,7 +2222,7 @@ const pulseGeometry = new THREE.SphereGeometry(
 );
 
 const pulseMaterial = new THREE.MeshBasicMaterial({
-  color: 0xfff0b4
+  color: 0xffffff
 });
 
 function conductionPath(
@@ -2231,7 +2247,7 @@ function conductionPath(
     pulseMaterial
   );
 
-  pulse.scale.setScalar(radius * 2.4);
+  pulse.scale.setScalar(radius * 3.2);
   group.add(pulse);
 
   electricalPaths.push({
@@ -2242,8 +2258,6 @@ function conductionPath(
     end
   });
 }
-
-// All start/end values below are fixed simulation seconds.
 
 conductionPath(
   atrialPaths,
@@ -2286,10 +2300,6 @@ conductionPath(
   0.10
 );
 
-/*
-  The His bundle is placed inside the central septal tissue,
-  not on the external anterior wall.
-*/
 conductionPath(
   hisGroup,
   [
@@ -2332,7 +2342,6 @@ conductionPath(
   0.205
 );
 
-// Purkinje fibres positioned near the ventricular endocardium.
 for (const key of ["rv", "lv"]) {
   const chamber = chambers[key];
 
@@ -2661,8 +2670,10 @@ function updateFlow(
   const visibility =
     Number($("bloodOpacity").value) / 100;
 
-  bloodGroup.visible = $("showBlood").checked;
-  tracerGroup.visible = $("showTracers").checked;
+  const showBlood = $("showBlood").checked;
+
+  bloodGroup.visible = showBlood;
+  tracerGroup.visible = showBlood;
 
   for (const material of volumeMaterials) {
     material.opacity = visibility * 0.67;
@@ -2677,8 +2688,19 @@ function updateFlow(
       const passiveFlow =
         time >= TIMING.avOpenEnd ? 0.55 : 0.20;
 
+      // Boost AV flow strength during atrial contraction (atrial kick)
+      const atrialSurge = atrialAmount * 2.2;
+
       strength =
-        avOpen * Math.max(passiveFlow, atrialAmount);
+        avOpen * Math.max(passiveFlow, atrialSurge);
+
+      // Instantly clear AV blood particles during ventricular systole
+      if (time >= TIMING.ventricularStart && time < TIMING.relaxationStart) {
+        strength = 0;
+        for (const particle of flow.particles) {
+          particle.active = false;
+        }
+      }
     } else {
       strength = 0.28;
     }
@@ -2692,8 +2714,13 @@ function updateFlow(
       bloodGroup.visible &&
       strength > 0.01
     ) {
+      // Increase particle emission rate during atrial systole
       const emissionRate =
-        flow.type === "outlet" ? 190 : 90;
+        flow.type === "outlet"
+          ? 190
+          : flow.type === "av"
+          ? 90 + 260 * atrialAmount
+          : 90;
 
       flow.accumulator +=
         deltaTime * emissionRate * strength;
@@ -2726,7 +2753,9 @@ function updateFlow(
       const particle = flow.particles[i];
 
       if (particle.active) {
-        particle.u += deltaTime / flow.travelTime;
+        // Accelerate flow velocity through AV valves during atrial contraction
+        const speedBoost = flow.type === "av" ? (1 + 1.4 * atrialAmount) : 1;
+        particle.u += (deltaTime / flow.travelTime) * speedBoost;
 
         if (particle.u >= 1) {
           particle.active = false;
@@ -2803,29 +2832,21 @@ function updateFlow(
     flow.instances.instanceMatrix.needsUpdate = true;
   }
 }
-
 // ============================================================
 // Fixed simulation timings
 // ============================================================
-
-/*
-  These are simplified educational timings in seconds after
-  SA-node activation.
-
-  Changing BPM changes only the interval between SA firings.
-  These values are never multiplied by BPM.
-*/
 
 const TIMING = {
   atrialStart: 0.035,
   atrialPeak: 0.100,
   atrialEnd: 0.180,
 
-  avCloseStart: 0.210,
-  avCloseEnd: 0.225,
-
   ventricularStart: 0.220,
   ventricularPeak: 0.350,
+
+  // AV valve closure / blood inflow fade finishes 0.25s after ventricular systole begins (0.220 + 0.250)
+  avCloseStart: 0.220,
+  avCloseEnd: 0.470,
 
   semilunarOpenStart: 0.270,
   semilunarOpenEnd: 0.285,
@@ -2844,40 +2865,32 @@ const TIMING = {
 // Three displayed cardiac-cycle stages
 // ============================================================
 
-/*
-  The displayed atrial stage includes the initial electrical
-  activation preceding visible contraction.
-
-  Stage widths are based on actual simulation seconds,
-  not three equal divisions of the slider.
-*/
-
 const DISPLAY_STAGES = [
   {
-    name: "Atrial systole",
+    name: "心房收縮期",
     start: 0,
     color: "#edbd72",
     description:
-      "The atria contract, pushing blood into the ventricles."
+      "心房收縮，將血液泵入心室。"
   },
   {
-    name: "Ventricular systole",
+    name: "心室收縮期",
     start: TIMING.ventricularStart,
     color: "#e78397",
     description:
-      "The ventricles contract, pushing blood into the pulmonary artery and aorta."
+      "心室收縮，將血液泵入肺動脈及主動脈。"
   },
   {
-    name: "Diastole",
+    name: "舒張期",
     start: TIMING.semilunarCloseEnd,
     color: "#76dcca",
     description:
-      "The heart muscle relaxes, allowing blood to enter the chambers."
+      "心肌舒張，讓血液流入心腔。"
   }
 ];
 
 let bpm = 70;
-let playbackSpeed = 0.25;
+let playbackSpeed = 0.2;
 
 let cycle = 0;
 let simulationTime = 0;
@@ -2935,8 +2948,8 @@ function updateStageHighlight(time) {
 
   $("timeline").setAttribute(
     "aria-valuetext",
-    `${DISPLAY_STAGES[current].name}, ` +
-    `${Math.round(time * 1000)} milliseconds`
+    `${DISPLAY_STAGES[current].name}，` +
+    `${Math.round(time * 1000)} 毫秒`
   );
 }
 
@@ -2947,7 +2960,7 @@ function updateTimingUI() {
   $("bpmDisplay").textContent = bpm;
 
   $("interval").textContent =
-    `Cycle duration: ${Math.round(duration * 1000)} ms`;
+    `週期時長：${Math.round(duration * 1000)} 毫秒`;
 
   $("markers").replaceChildren();
 
@@ -2977,7 +2990,7 @@ function updateTimingUI() {
     element.title =
       `${stage.name}: ` +
       `${Math.round(stage.start * 1000)}–` +
-      `${Math.round(end * 1000)} ms`;
+      `${Math.round(end * 1000)} 毫秒`;
 
     $("markers").append(element);
   });
@@ -2987,14 +3000,14 @@ function updateTimingUI() {
 
 function openingText(value) {
   if (value < 0.02) {
-    return "Closed";
+    return "關閉";
   }
 
   if (value > 0.98) {
-    return "Open";
+    return "開啟";
   }
 
-  return "Moving";
+  return "活動中";
 }
 
 // ============================================================
@@ -3084,7 +3097,6 @@ function updateHeart(time, deltaTime) {
   aortic.update(semilunarOpen);
   pulmonary.update(semilunarOpen);
 
-  // Tendons follow both papillary and leaflet attachments.
   for (const item of chordItems) {
     deformPoint(
       item.tip,
@@ -3128,9 +3140,9 @@ function updateHeart(time, deltaTime) {
     positions.needsUpdate = true;
   }
 
-  saMaterial.emissiveIntensity =
-    0.25 +
-    3.3 * Math.exp(
+ saMaterial.emissiveIntensity =
+    0.3 +
+    5.0 * Math.exp(
       -Math.pow(
         (time - 0.015) / 0.020,
         2
@@ -3138,8 +3150,8 @@ function updateHeart(time, deltaTime) {
     );
 
   avMaterial.emissiveIntensity =
-    0.25 +
-    2.5 *
+    0.3 +
+    4.0 *
       ss(0.055, 0.075, time) *
       (1 - ss(0.15, 0.17, time));
 
@@ -3178,8 +3190,9 @@ function updateHeart(time, deltaTime) {
         )
       );
 
+    // Boosted emissive intensity peak from 2.6 to 4.8 for extreme color sharpness
     item.material.emissiveIntensity =
-      0.22 + 2.6 * activation;
+      0.3 + 4.8 * activation;
   }
 
   liquidClock.value = simulationTime;
@@ -3191,7 +3204,6 @@ function updateHeart(time, deltaTime) {
     semilunarOpen
   );
 
-  // Display only the three requested stages.
   const [name, description] = phaseInfo(time);
 
   $("phaseName").textContent = name;
@@ -3202,17 +3214,17 @@ function updateHeart(time, deltaTime) {
   $("atrialStatus").textContent =
     time >= TIMING.atrialStart &&
     time < TIMING.atrialEnd
-      ? "Contracting"
-      : "Relaxed";
+      ? "收縮"
+      : "舒張";
 
   $("ventStatus").textContent =
     time >= TIMING.ventricularStart &&
     time < TIMING.semilunarCloseEnd
-      ? "Contracting"
+      ? "收縮"
       : time >= TIMING.semilunarCloseEnd &&
         time < TIMING.relaxationEnd
-        ? "Relaxing"
-        : "Relaxed";
+        ? "正在舒張"
+        : "舒張";
 
   $("avStatus").textContent =
     openingText(avOpen);
@@ -3227,7 +3239,7 @@ function updateHeart(time, deltaTime) {
     semilunarOpen > 0.98 ? "open" : "";
 
   $("elapsed").textContent =
-    `Cycle time: ${Math.round(time * 1000)} ms`;
+    `週期時間：${Math.round(time * 1000)} 毫秒`;
 
   if (!scrubbing) {
     $("timeline").value = Math.round(
@@ -3244,11 +3256,11 @@ function setPlaying(value) {
   playing = value;
 
   $("play").textContent =
-    value ? "❚❚ Pause" : "▶ Play";
+    value ? "❚❚ 暫停" : "▶ 播放";
 
   $("play").setAttribute(
     "aria-label",
-    value ? "Pause animation" : "Play animation"
+    value ? "暫停動畫" : "播放動畫"
   );
 }
 
@@ -3265,13 +3277,6 @@ $("restart").addEventListener("click", () => {
 $("rate").addEventListener("input", event => {
   bpm = Number(event.target.value);
 
-  /*
-    Preserve elapsed conduction time.
-
-    If the newly selected interval has already elapsed,
-    start the next SA-node cycle rather than compressing
-    the current impulse's conduction sequence.
-  */
   if (cycle >= heartPeriodSeconds()) {
     cycle = 0;
     clearFlow();
@@ -3342,6 +3347,8 @@ function updateTransparency() {
   }
 }
 
+$("ghost").checked = true;
+
 $("ghost").addEventListener(
   "change",
   updateTransparency
@@ -3368,10 +3375,6 @@ $("anterior").addEventListener("click", () => {
 
 $("posterior").addEventListener("click", () => {
   setView(0, 1.30, -8.3);
-});
-
-$("reset").addEventListener("click", () => {
-  setView(0.25, 1.55, 8.3);
 });
 
 $("inspectSeptum").addEventListener("click", () => {
@@ -3544,10 +3547,6 @@ function animate(now) {
   let deltaTime = 0;
 
   if (playing && !scrubbing) {
-    /*
-      Playback speed controls viewing speed.
-      BPM controls only the SA-to-SA interval.
-    */
     deltaTime = frameDelta * playbackSpeed;
 
     cycle += deltaTime;
