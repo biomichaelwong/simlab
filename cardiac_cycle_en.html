@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>互動式心臟解剖學與心搏週期</title>
+<title>Interactive Heart Anatomy & Cardiac Cycle</title>
 
 <script type="importmap">
 {
@@ -541,41 +541,41 @@ canvas {
 <div id="app" class="collapsed">
 
   <aside>
-    <div class="eyebrow">互動式心臟地圖</div>
+    <div class="eyebrow">Interactive cardiac atlas</div>
 
-    <h1>一個心臟。<br>四個腔室。</h1>
+    <h1>One heart. Four<br>chambers.</h1>
 
     <div class="muted">
-      探索心臟解剖結構、電傳導<br>激活過程及血液流動。
+      Explore cardiac anatomy, electrical<br>activation and blood movement.
     </div>
 
-    <div class="section">視角</div>
+    <div class="section">View</div>
 
     <div class="buttons">
-      <button id="anterior">前視角</button>
-      <button id="posterior">後視角</button>
+      <button id="anterior">Anterior</button>
+      <button id="posterior">Posterior</button>
     </div>
 
     <label class="layer">
       <input id="ghost" type="checkbox" checked>
-      半透明心肌
+      Transparent myocardium
     </label>
 
     <label class="layer">
       <input id="showLabels" type="checkbox" checked>
-      結構標籤
+      Structure labels
     </label>
 
-    <div class="section">解剖剖切</div>
+    <div class="section">Dissection</div>
 
     <div class="row range-label">
-      <span>前側組織剖切</span>
+      <span>Anterior tissue removal</span>
       <span id="cutValue">0%</span>
     </div>
 
     <input
       id="cut"
-      aria-label="前側組織剖切"
+      aria-label="Anterior tissue removal"
       type="range"
       min="0"
       max="100"
@@ -583,48 +583,48 @@ canvas {
     >
 
     <div class="buttons" style="margin-top:7px">
-      <button id="inspectSeptum">觀察室間隔</button>
-      <button id="wholeHeart">完整器官</button>
+      <button id="inspectSeptum">Inspect septum</button>
+      <button id="wholeHeart">Whole organ</button>
     </div>
 
     <div class="section row">
-      <span>解剖圖層</span>
-      <button id="showAll">全部顯示</button>
+      <span>Anatomical layers</span>
+      <button id="showAll">All</button>
     </div>
 
     <div id="layerList"></div>
 
-    <div class="section">血液流動視覺化</div>
+    <div class="section">Blood visualization</div>
 
     <label class="layer">
       <input id="showBlood" type="checkbox" checked>
-      血液流動
+      Blood flow
     </label>
 
     <div class="row range-label" style="margin-top:10px">
-      <span>血液可見度</span>
+      <span>Blood visibility</span>
       <span id="bloodValue">35%</span>
     </div>
 
     <input
       id="bloodOpacity"
-      aria-label="血液可見度"
+      aria-label="Blood visibility"
       type="range"
       min="0"
       max="100"
       value="35"
     >
 
-    <div class="section">模擬設定</div>
+    <div class="section">Simulation</div>
 
     <div class="row range-label">
-      <span>竇房結起搏速率</span>
+      <span>SA firing rate</span>
       <span id="rateValue">70 BPM</span>
     </div>
 
     <input
       id="rate"
-      aria-label="竇房結起搏速率"
+      aria-label="SA firing rate"
       type="range"
       min="40"
       max="120"
@@ -632,13 +632,13 @@ canvas {
     >
 
     <div class="row range-label" style="margin-top:11px">
-      <span>播放速度</span>
+      <span>Playback speed</span>
       <span id="speedValue">0.20×</span>
     </div>
 
     <input
       id="speed"
-      aria-label="播放速度"
+      aria-label="Playback speed"
       type="range"
       min="0.1"
       max="1"
@@ -650,65 +650,65 @@ canvas {
   <main>
     <canvas
       id="scene"
-      aria-label="互動式心臟解剖學"
+      aria-label="Interactive cardiac anatomy"
     ></canvas>
 
     <div id="labels"></div>
 
     <div id="loading">
-      正在建構心肌幾何模型…
+      Building continuous myocardial geometry…
     </div>
 
     <div class="topbar">
       <div style="display: flex; align-items: center; gap: 14px;">
-        <button id="sidebarToggle" class="toggle-btn" aria-label="切換面板" aria-expanded="false">
+        <button id="sidebarToggle" class="toggle-btn" aria-label="Toggle panel" aria-expanded="false">
           <span id="toggleIcon">»</span>
-          <span>控制面板</span>
+          <span>Controls</span>
         </button>
         <div>
-          <div class="eyebrow">解剖學 / 電生理學 / 血流</div>
-          <h2>心臟週期</h2>
+          <div class="eyebrow">Anatomy / electrophysiology / flow</div>
+          <h2>The cardiac cycle</h2>
         </div>
       </div>
 
-      <div class="badge">教學原型模組</div>
+      <div class="badge">EDUCATIONAL PROTOTYPE</div>
     </div>
 
     <div class="legend">
       <span>
         <i class="dot" style="background:#c65c72"></i>
-        心肌
+        Myocardium
       </span>
 
       <span>
         <i class="dot" style="background:#ffe09c"></i>
-        傳導系統結構
+        Conduction anatomy
       </span>
 
       <span>
         <i class="dot" style="background:#e13645"></i>
-        含氧血
+        Oxygenated blood
       </span>
 
       <span>
         <i class="dot" style="background:#741c36"></i>
-        缺氧血
+        Deoxygenated blood
       </span>
     </div>
 
     <div class="bottom">
       <div class="playback">
-        <button id="play" class="primary">▶ 播放</button>
+        <button id="play" class="primary">▶ Play</button>
 
-        <button id="restart" aria-label="重新開始心臟週期">
+        <button id="restart" aria-label="Restart cardiac cycle">
           ↺
         </button>
 
         <div class="phase">
-          <div id="phaseName">心房收縮期</div>
+          <div id="phaseName">Atrial systole</div>
 
           <div id="phaseDescription">
-            心房收縮，將血液泵入心室。
+            The atria contract, pushing blood into the ventricles.
           </div>
         </div>
 
@@ -719,13 +719,13 @@ canvas {
       </div>
 
       <div class="timeline-heading">
-        <span id="elapsed">週期時間：0 毫秒</span>
-        <span id="interval">週期時長：857 毫秒</span>
+        <span id="elapsed">Cycle time: 0 ms</span>
+        <span id="interval">Cycle duration: 857 ms</span>
       </div>
 
       <input
         id="timeline"
-        aria-label="心臟週期位置"
+        aria-label="Cardiac cycle position"
         type="range"
         min="0"
         max="1000"
@@ -734,28 +734,28 @@ canvas {
 
       <div
         id="markers"
-        aria-label="心臟週期的三個階段"
+        aria-label="The three stages of the cardiac cycle"
       ></div>
 
       <div class="statuses">
         <div class="status">
-          心房
-          <b id="atrialStatus">舒張</b>
+          Atria
+          <b id="atrialStatus">Relaxed</b>
         </div>
 
         <div class="status">
-          心室
-          <b id="ventStatus">舒張</b>
+          Ventricles
+          <b id="ventStatus">Relaxed</b>
         </div>
 
         <div class="status">
-          二尖瓣 / 三尖瓣
-          <b id="avStatus">開啟</b>
+          Mitral / tricuspid
+          <b id="avStatus">Open</b>
         </div>
 
         <div class="status">
-          主動脈瓣 / 肺動脈瓣
-          <b id="slStatus">關閉</b>
+          Aortic / pulmonary
+          <b id="slStatus">Closed</b>
         </div>
       </div>
     </div>
@@ -823,7 +823,7 @@ try {
   });
 } catch (error) {
   $("loading").textContent =
-    "無法啟動 WebGL。請嘗試開啟硬體加速。";
+    "WebGL could not start. Try enabling hardware acceleration.";
   throw error;
 }
 
@@ -1601,11 +1601,11 @@ function buildMyocardium() {
 const myocardium = buildMyocardium();
 
 [
-  "右心房壁",
-  "左心房壁",
-  "右心室壁",
-  "左心室壁",
-  "室間隔"
+  "Right atrial wall",
+  "Left atrial wall",
+  "Right ventricular wall",
+  "Left ventricular wall",
+  "Interventricular septum"
 ].forEach((name, index) => {
   layerControl(
     name,
@@ -1621,7 +1621,7 @@ const myocardium = buildMyocardium();
 // ============================================================
 
 const vessels = makeLayer(
-  "大血管",
+  "Great vessels",
   0xb47584
 );
 
@@ -1790,7 +1790,7 @@ function addLabel(
 }
 
 addLabel(
-  "右心房",
+  "Right atrium",
   [-1.03, 1.04, 0.13],
   null,
   false,
@@ -1798,7 +1798,7 @@ addLabel(
 );
 
 addLabel(
-  "左心房",
+  "Left atrium",
   [1.03, 1.15, -0.05],
   null,
   false,
@@ -1806,7 +1806,7 @@ addLabel(
 );
 
 addLabel(
-  "右心室",
+  "Right ventricle",
   [-1.06, -0.47, 0.28],
   null,
   false,
@@ -1814,7 +1814,7 @@ addLabel(
 );
 
 addLabel(
-  "左心室",
+  "Left ventricle",
   [1.01, -0.58, 0.14],
   null,
   false,
@@ -1822,7 +1822,7 @@ addLabel(
 );
 
 addLabel(
-  "室間隔",
+  "Septum",
   [0.04, -0.47, 0.23],
   null,
   false,
@@ -1830,7 +1830,7 @@ addLabel(
 );
 
 addLabel(
-  "主動脈",
+  "Aorta",
   [0.31, 2.10, -0.22],
   vessels
 );
@@ -1984,7 +1984,7 @@ function createValve(
 }
 
 const tricuspid = createValve(
-  "三尖瓣",
+  "Tricuspid valve",
   [-0.50, 0.55, 0.06],
   0.222,
   3,
@@ -1992,7 +1992,7 @@ const tricuspid = createValve(
 );
 
 const mitral = createValve(
-  "二尖瓣",
+  "Mitral valve",
   [0.49, 0.57, -0.17],
   0.213,
   2,
@@ -2000,7 +2000,7 @@ const mitral = createValve(
 );
 
 const aortic = createValve(
-  "主動脈瓣",
+  "Aortic valve",
   [0.23, 0.73, -0.22],
   0.148,
   3,
@@ -2008,7 +2008,7 @@ const aortic = createValve(
 );
 
 const pulmonary = createValve(
-  "肺動脈瓣",
+  "Pulmonary valve",
   [-0.43, 0.73, 0.35],
   0.138,
   3,
@@ -2016,13 +2016,13 @@ const pulmonary = createValve(
 );
 
 addLabel(
-  "三尖瓣",
+  "Tricuspid",
   [-0.69, 0.55, 0.32],
   tricuspid.group
 );
 
 addLabel(
-  "二尖瓣",
+  "Mitral",
   [0.69, 0.58, 0.12],
   mitral.group
 );
@@ -2032,12 +2032,12 @@ addLabel(
 // ============================================================
 
 const tendons = makeLayer(
-  "心腱索",
+  "Chordae tendineae",
   0xf1dcb9
 );
 
 const papillary = makeLayer(
-  "乳頭肌",
+  "Papillary muscles",
   0xd08089
 );
 
@@ -2123,32 +2123,32 @@ addChordae(tricuspid, "rv", 3);
 // ============================================================
 
 const saGroup = makeLayer(
-  "竇房結",
+  "SA node",
   COLORS.conduction
 );
 
 const avGroup = makeLayer(
-  "房室結",
+  "AV node",
   COLORS.conduction
 );
 
 const hisGroup = makeLayer(
-  "希氏束",
+  "Bundle of His",
   COLORS.conduction
 );
 
 const bundleGroup = makeLayer(
-  "右 / 左束支",
+  "Right / left bundle branches",
   COLORS.conduction
 );
 
 const purkinjeGroup = makeLayer(
-  "浦金耶纖維",
+  "Purkinje fibres",
   COLORS.conduction
 );
 
 const atrialPaths = makeLayer(
-  "心房傳導路徑",
+  "Atrial activation paths",
   0xcfb47d
 );
 
@@ -2186,28 +2186,28 @@ attachedMesh(
 );
 
 addLabel(
-  "竇房結",
+  "SA node",
   [-0.88, 1.49, 0.17],
   saGroup,
   true
 );
 
 addLabel(
-  "房室結",
+  "AV node",
   [-0.14, 0.73, 0.15],
   avGroup,
   true
 );
 
 addLabel(
-  "希氏束 ",
+  "Bundle of His",
   [0.08, 0.31, 0.13],
   hisGroup,
   true
 );
 
 addLabel(
-  "浦金耶纖維",
+  "Purkinje fibre",
   [0.79, -0.91, 0.24],
   purkinjeGroup,
   true
@@ -2867,25 +2867,25 @@ const TIMING = {
 
 const DISPLAY_STAGES = [
   {
-    name: "心房收縮期",
+    name: "Atrial systole",
     start: 0,
     color: "#edbd72",
     description:
-      "心房收縮，將血液泵入心室。"
+      "The atria contract, pushing blood into the ventricles."
   },
   {
-    name: "心室收縮期",
+    name: "Ventricular systole",
     start: TIMING.ventricularStart,
     color: "#e78397",
     description:
-      "心室收縮，將血液泵入肺動脈及主動脈。"
+      "The ventricles contract, pushing blood into the pulmonary artery and aorta."
   },
   {
-    name: "舒張期",
+    name: "Diastole",
     start: TIMING.semilunarCloseEnd,
     color: "#76dcca",
     description:
-      "心肌舒張，讓血液流入心腔。"
+      "The heart muscle relaxes, allowing blood to enter the chambers."
   }
 ];
 
@@ -2948,8 +2948,8 @@ function updateStageHighlight(time) {
 
   $("timeline").setAttribute(
     "aria-valuetext",
-    `${DISPLAY_STAGES[current].name}，` +
-    `${Math.round(time * 1000)} 毫秒`
+    `${DISPLAY_STAGES[current].name}, ` +
+    `${Math.round(time * 1000)} milliseconds`
   );
 }
 
@@ -2960,7 +2960,7 @@ function updateTimingUI() {
   $("bpmDisplay").textContent = bpm;
 
   $("interval").textContent =
-    `週期時長：${Math.round(duration * 1000)} 毫秒`;
+    `Cycle duration: ${Math.round(duration * 1000)} ms`;
 
   $("markers").replaceChildren();
 
@@ -2990,7 +2990,7 @@ function updateTimingUI() {
     element.title =
       `${stage.name}: ` +
       `${Math.round(stage.start * 1000)}–` +
-      `${Math.round(end * 1000)} 毫秒`;
+      `${Math.round(end * 1000)} ms`;
 
     $("markers").append(element);
   });
@@ -3000,14 +3000,14 @@ function updateTimingUI() {
 
 function openingText(value) {
   if (value < 0.02) {
-    return "關閉";
+    return "Closed";
   }
 
   if (value > 0.98) {
-    return "開啟";
+    return "Open";
   }
 
-  return "活動中";
+  return "Moving";
 }
 
 // ============================================================
@@ -3214,17 +3214,17 @@ function updateHeart(time, deltaTime) {
   $("atrialStatus").textContent =
     time >= TIMING.atrialStart &&
     time < TIMING.atrialEnd
-      ? "收縮"
-      : "舒張";
+      ? "Contracting"
+      : "Relaxed";
 
   $("ventStatus").textContent =
     time >= TIMING.ventricularStart &&
     time < TIMING.semilunarCloseEnd
-      ? "收縮"
+      ? "Contracting"
       : time >= TIMING.semilunarCloseEnd &&
         time < TIMING.relaxationEnd
-        ? "正在舒張"
-        : "舒張";
+        ? "Relaxing"
+        : "Relaxed";
 
   $("avStatus").textContent =
     openingText(avOpen);
@@ -3239,7 +3239,7 @@ function updateHeart(time, deltaTime) {
     semilunarOpen > 0.98 ? "open" : "";
 
   $("elapsed").textContent =
-    `週期時間：${Math.round(time * 1000)} 毫秒`;
+    `Cycle time: ${Math.round(time * 1000)} ms`;
 
   if (!scrubbing) {
     $("timeline").value = Math.round(
@@ -3256,11 +3256,11 @@ function setPlaying(value) {
   playing = value;
 
   $("play").textContent =
-    value ? "❚❚ 暫停" : "▶ 播放";
+    value ? "❚❚ Pause" : "▶ Play";
 
   $("play").setAttribute(
     "aria-label",
-    value ? "暫停動畫" : "播放動畫"
+    value ? "Pause animation" : "Play animation"
   );
 }
 
