@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>互動式心臟結構與心動週期</title>
+<title>互動式心臟解剖學與心搏週期</title>
 
 <script type="importmap">
 {
@@ -46,6 +46,11 @@ input[type="range"] {
   display: grid;
   grid-template-columns: 292px 1fr;
   height: 100dvh;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#app.collapsed {
+  grid-template-columns: 0px 1fr !important;
 }
 
 aside {
@@ -54,6 +59,17 @@ aside {
   background: #101825;
   border-right: 1px solid #29374b;
   z-index: 5;
+  min-width: 0;
+  transition: padding 0.3s ease, opacity 0.25s ease;
+  white-space: nowrap;
+}
+
+#app.collapsed aside {
+  padding: 0;
+  overflow: hidden;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 h1 {
@@ -149,12 +165,6 @@ input[type="range"] {
   margin-bottom: 6px;
 }
 
-.note {
-  margin-top: 17px;
-  border-top: 1px solid #2b3a50;
-  padding-top: 13px;
-}
-
 main {
   position: relative;
   min-width: 0;
@@ -175,8 +185,40 @@ canvas {
   right: 24px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 14px;
   pointer-events: none;
+  z-index: 6;
+}
+
+.toggle-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #101825e6;
+  border: 1px solid #354963;
+  color: #76e2ca;
+  font-weight: 800;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background: #1a283b;
+  color: #ffffff;
+  border-color: #76e2ca;
+}
+
+#toggleIcon {
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
 }
 
 .topbar h2 {
@@ -496,28 +538,27 @@ canvas {
 </head>
 
 <body>
-<div id="app">
+<div id="app" class="collapsed">
 
   <aside>
-    <div class="eyebrow">互動式心臟圖譜</div>
+    <div class="eyebrow">互動式心臟地圖</div>
 
-    <h1>一個心臟。四個心腔。</h1>
+    <h1>一個心臟。<br>四個腔室。</h1>
 
     <div class="muted">
-      探索心臟的結構、電活動及血液流動。
+      探索心臟解剖結構、電傳導<br>激活過程及血液流動。
     </div>
 
     <div class="section">視角</div>
 
     <div class="buttons">
-      <button id="anterior">前面觀</button>
-      <button id="posterior">後面觀</button>
-      <button id="reset">重設</button>
+      <button id="anterior">前視角</button>
+      <button id="posterior">後視角</button>
     </div>
 
     <label class="layer">
       <input id="ghost" type="checkbox" checked>
-      透明心肌
+      半透明心肌
     </label>
 
     <label class="layer">
@@ -525,16 +566,16 @@ canvas {
       結構標籤
     </label>
 
-    <div class="section">解剖切面</div>
+    <div class="section">解剖剖切</div>
 
     <div class="row range-label">
-      <span>前壁組織移除</span>
+      <span>前側組織剖切</span>
       <span id="cutValue">0%</span>
     </div>
 
     <input
       id="cut"
-      aria-label="前壁組織移除"
+      aria-label="前側組織剖切"
       type="range"
       min="0"
       max="100"
@@ -542,27 +583,22 @@ canvas {
     >
 
     <div class="buttons" style="margin-top:7px">
-      <button id="inspectSeptum">檢視中隔</button>
-      <button id="wholeHeart">完整心臟</button>
+      <button id="inspectSeptum">觀察室間隔</button>
+      <button id="wholeHeart">完整器官</button>
     </div>
 
     <div class="section row">
-      <span>解剖層次</span>
-      <button id="showAll">全部</button>
+      <span>解剖圖層</span>
+      <button id="showAll">全部顯示</button>
     </div>
 
     <div id="layerList"></div>
 
-    <div class="section">血液顯示</div>
+    <div class="section">血液流動視覺化</div>
 
     <label class="layer">
       <input id="showBlood" type="checkbox" checked>
-      血液容量與流動
-    </label>
-
-    <label class="layer">
-      <input id="showTracers" type="checkbox" checked>
-      血流方向示蹤粒子
+      血液流動
     </label>
 
     <div class="row range-label" style="margin-top:10px">
@@ -579,16 +615,16 @@ canvas {
       value="35"
     >
 
-    <div class="section">模擬</div>
+    <div class="section">模擬設定</div>
 
     <div class="row range-label">
-      <span>竇房結發放率</span>
+      <span>竇房結起搏速率</span>
       <span id="rateValue">70 BPM</span>
     </div>
 
     <input
       id="rate"
-      aria-label="竇房結發放率"
+      aria-label="竇房結起搏速率"
       type="range"
       min="40"
       max="120"
@@ -597,7 +633,7 @@ canvas {
 
     <div class="row range-label" style="margin-top:11px">
       <span>播放速度</span>
-      <span id="speedValue">0.25×</span>
+      <span id="speedValue">0.20×</span>
     </div>
 
     <input
@@ -607,50 +643,35 @@ canvas {
       min="0.1"
       max="1"
       step="0.05"
-      value="0.25"
+      value="0.2"
     >
-
-    <div class="muted note">
-      拖曳以旋轉 · 滾動／縮放以拉近拉遠 · 右鍵拖曳以平移。
-      <br><br>
-
-      傳導結構隨心壁一同移動。
-      希氏束嵌於心室中隔內。
-      <br><br>
-
-      BPM 改變竇房結衝動之間的時間間隔，
-      而非所模擬的傳導速度。
-      <br><br>
-
-      血液以紅色及深紅色顯示。示蹤粒子表示
-      血流方向，而非個別血細胞。
-      <br><br>
-
-      教學用程序化模型，未經臨床驗證。
-      血液流動僅為示意，並非計算
-      流體力學模擬。
-    </div>
   </aside>
 
   <main>
     <canvas
       id="scene"
-      aria-label="互動式心臟結構"
+      aria-label="互動式心臟解剖學"
     ></canvas>
 
     <div id="labels"></div>
 
     <div id="loading">
-      正在建立連續的心肌幾何模型…
+      正在建構心肌幾何模型…
     </div>
 
     <div class="topbar">
-      <div>
-        <div class="eyebrow">結構／電生理／血流</div>
-        <h2>心動週期</h2>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <button id="sidebarToggle" class="toggle-btn" aria-label="切換面板" aria-expanded="false">
+          <span id="toggleIcon">»</span>
+          <span>控制面板</span>
+        </button>
+        <div>
+          <div class="eyebrow">解剖學 / 電生理學 / 血流</div>
+          <h2>心臟週期</h2>
+        </div>
       </div>
 
-      <div class="badge">教學用原型</div>
+      <div class="badge">教學原型模組</div>
     </div>
 
     <div class="legend">
@@ -679,15 +700,15 @@ canvas {
       <div class="playback">
         <button id="play" class="primary">▶ 播放</button>
 
-        <button id="restart" aria-label="重新開始心動週期">
+        <button id="restart" aria-label="重新開始心臟週期">
           ↺
         </button>
 
         <div class="phase">
-          <div id="phaseName">心房收縮</div>
+          <div id="phaseName">心房收縮期</div>
 
           <div id="phaseDescription">
-            心房收縮，將血液推入心室。
+            心房收縮，將血液泵入心室。
           </div>
         </div>
 
@@ -704,7 +725,7 @@ canvas {
 
       <input
         id="timeline"
-        aria-label="心動週期位置"
+        aria-label="心臟週期位置"
         type="range"
         min="0"
         max="1000"
@@ -713,7 +734,7 @@ canvas {
 
       <div
         id="markers"
-        aria-label="心動週期的三個階段"
+        aria-label="心臟週期的三個階段"
       ></div>
 
       <div class="statuses">
@@ -728,12 +749,12 @@ canvas {
         </div>
 
         <div class="status">
-          二尖瓣／三尖瓣
-          <b id="avStatus">開放</b>
+          二尖瓣 / 三尖瓣
+          <b id="avStatus">開啟</b>
         </div>
 
         <div class="status">
-          主動脈瓣／肺動脈瓣
+          主動脈瓣 / 肺動脈瓣
           <b id="slStatus">關閉</b>
         </div>
       </div>
@@ -776,6 +797,20 @@ const ss = (a, b, x) =>
   THREE.MathUtils.smoothstep(x, a, b);
 
 // ============================================================
+// Panel toggle controller
+// ============================================================
+
+const app = $("app");
+const sidebarToggle = $("sidebarToggle");
+const toggleIcon = $("toggleIcon");
+
+sidebarToggle.addEventListener("click", () => {
+  const isCollapsed = app.classList.toggle("collapsed");
+  toggleIcon.textContent = isCollapsed ? "»" : "«";
+  sidebarToggle.setAttribute("aria-expanded", !isCollapsed);
+});
+
+// ============================================================
 // Renderer and scene
 // ============================================================
 
@@ -788,7 +823,7 @@ try {
   });
 } catch (error) {
   $("loading").textContent =
-    "WebGL 無法啟動。請嘗試啟用硬件加速。";
+    "無法啟動 WebGL。請嘗試開啟硬體加速。";
   throw error;
 }
 
@@ -976,12 +1011,6 @@ const wallMaterial = tissueMaterial(
   0.27
 );
 
-/*
-  心肌為單一網格。
-
-  區域可見性可隱藏該網格中選定的部分，
-  而非將心臟表示為四個獨立的心腔表面。
-*/
 wallMaterial.onBeforeCompile = shader => {
   shader.uniforms.uWallFlags = wallFlags;
 
@@ -1064,17 +1093,6 @@ const tendonMaterial = new THREE.LineBasicMaterial({
 // ============================================================
 // Common anatomical deformation field
 // ============================================================
-
-/*
-  每個結構頂點都有參考空間下的心房與
-  心室位移向量。
-
-  相同的映射應用於心肌、傳導
-  結構、瓣膜、腱索及血液表面。
-
-  此為示意性的運動學模型，並非有限元
-  或不可壓縮心肌力學求解器。
-*/
 
 function displacementBasis(x, y, z, outA, outV) {
   const side = ss(-0.08, 0.12, x);
@@ -1421,7 +1439,6 @@ function myocardiumField(x, y, z) {
     );
   }
 
-  // 通過房室交界的連接。
   cavity = smoothMinimum(
     cavity,
     ellipsoidSDF(
@@ -1442,7 +1459,6 @@ function myocardiumField(x, y, z) {
     0.055
   );
 
-  // 心室流出道連接。
   cavity = smoothMinimum(
     cavity,
     ellipsoidSDF(
@@ -1589,7 +1605,7 @@ const myocardium = buildMyocardium();
   "左心房壁",
   "右心室壁",
   "左心室壁",
-  "心室中隔"
+  "室間隔"
 ].forEach((name, index) => {
   layerControl(
     name,
@@ -1806,7 +1822,7 @@ addLabel(
 );
 
 addLabel(
-  "中隔",
+  "室間隔",
   [0.04, -0.47, 0.23],
   null,
   false,
@@ -2016,7 +2032,7 @@ addLabel(
 // ============================================================
 
 const tendons = makeLayer(
-  "腱索",
+  "心腱索",
   0xf1dcb9
 );
 
@@ -2117,22 +2133,22 @@ const avGroup = makeLayer(
 );
 
 const hisGroup = makeLayer(
-  "希氏束 — 中隔內",
+  "希氏束",
   COLORS.conduction
 );
 
 const bundleGroup = makeLayer(
-  "左／右束支",
+  "右 / 左束支",
   COLORS.conduction
 );
 
 const purkinjeGroup = makeLayer(
-  "浦金氏纖維",
+  "浦金耶纖維",
   COLORS.conduction
 );
 
 const atrialPaths = makeLayer(
-  "心房激動路徑",
+  "心房傳導路徑",
   0xcfb47d
 );
 
@@ -2184,14 +2200,14 @@ addLabel(
 );
 
 addLabel(
-  "希氏束 · 中隔內",
+  "希氏束 ",
   [0.08, 0.31, 0.13],
   hisGroup,
   true
 );
 
 addLabel(
-  "浦金氏纖維網絡",
+  "浦金耶纖維",
   [0.79, -0.91, 0.24],
   purkinjeGroup,
   true
@@ -2206,7 +2222,7 @@ const pulseGeometry = new THREE.SphereGeometry(
 );
 
 const pulseMaterial = new THREE.MeshBasicMaterial({
-  color: 0xfff0b4
+  color: 0xffffff
 });
 
 function conductionPath(
@@ -2231,7 +2247,7 @@ function conductionPath(
     pulseMaterial
   );
 
-  pulse.scale.setScalar(radius * 2.4);
+  pulse.scale.setScalar(radius * 3.2);
   group.add(pulse);
 
   electricalPaths.push({
@@ -2242,8 +2258,6 @@ function conductionPath(
     end
   });
 }
-
-// 以下所有 start/end 值皆為固定的模擬秒數。
 
 conductionPath(
   atrialPaths,
@@ -2286,10 +2300,6 @@ conductionPath(
   0.10
 );
 
-/*
-  希氏束位於中央的中隔組織內，
-  而非外側前壁上。
-*/
 conductionPath(
   hisGroup,
   [
@@ -2332,7 +2342,6 @@ conductionPath(
   0.205
 );
 
-// 浦金氏纖維定位於接近心室心內膜處。
 for (const key of ["rv", "lv"]) {
   const chamber = chambers[key];
 
@@ -2661,8 +2670,10 @@ function updateFlow(
   const visibility =
     Number($("bloodOpacity").value) / 100;
 
-  bloodGroup.visible = $("showBlood").checked;
-  tracerGroup.visible = $("showTracers").checked;
+  const showBlood = $("showBlood").checked;
+
+  bloodGroup.visible = showBlood;
+  tracerGroup.visible = showBlood;
 
   for (const material of volumeMaterials) {
     material.opacity = visibility * 0.67;
@@ -2677,8 +2688,19 @@ function updateFlow(
       const passiveFlow =
         time >= TIMING.avOpenEnd ? 0.55 : 0.20;
 
+      // Boost AV flow strength during atrial contraction (atrial kick)
+      const atrialSurge = atrialAmount * 2.2;
+
       strength =
-        avOpen * Math.max(passiveFlow, atrialAmount);
+        avOpen * Math.max(passiveFlow, atrialSurge);
+
+      // Instantly clear AV blood particles during ventricular systole
+      if (time >= TIMING.ventricularStart && time < TIMING.relaxationStart) {
+        strength = 0;
+        for (const particle of flow.particles) {
+          particle.active = false;
+        }
+      }
     } else {
       strength = 0.28;
     }
@@ -2692,8 +2714,13 @@ function updateFlow(
       bloodGroup.visible &&
       strength > 0.01
     ) {
+      // Increase particle emission rate during atrial systole
       const emissionRate =
-        flow.type === "outlet" ? 190 : 90;
+        flow.type === "outlet"
+          ? 190
+          : flow.type === "av"
+          ? 90 + 260 * atrialAmount
+          : 90;
 
       flow.accumulator +=
         deltaTime * emissionRate * strength;
@@ -2726,7 +2753,9 @@ function updateFlow(
       const particle = flow.particles[i];
 
       if (particle.active) {
-        particle.u += deltaTime / flow.travelTime;
+        // Accelerate flow velocity through AV valves during atrial contraction
+        const speedBoost = flow.type === "av" ? (1 + 1.4 * atrialAmount) : 1;
+        particle.u += (deltaTime / flow.travelTime) * speedBoost;
 
         if (particle.u >= 1) {
           particle.active = false;
@@ -2803,29 +2832,21 @@ function updateFlow(
     flow.instances.instanceMatrix.needsUpdate = true;
   }
 }
-
 // ============================================================
 // Fixed simulation timings
 // ============================================================
-
-/*
-  這些是竇房結激動之後、以秒計的
-  簡化教學用時序。
-
-  改變 BPM 只會改變竇房結發放之間的間隔。
-  這些數值永不會乘以 BPM。
-*/
 
 const TIMING = {
   atrialStart: 0.035,
   atrialPeak: 0.100,
   atrialEnd: 0.180,
 
-  avCloseStart: 0.210,
-  avCloseEnd: 0.225,
-
   ventricularStart: 0.220,
   ventricularPeak: 0.350,
+
+  // AV valve closure / blood inflow fade finishes 0.25s after ventricular systole begins (0.220 + 0.250)
+  avCloseStart: 0.220,
+  avCloseEnd: 0.470,
 
   semilunarOpenStart: 0.270,
   semilunarOpenEnd: 0.285,
@@ -2844,40 +2865,32 @@ const TIMING = {
 // Three displayed cardiac-cycle stages
 // ============================================================
 
-/*
-  所顯示的心房階段包括在可見收縮之前的
-  初始電激動。
-
-  各階段寬度以實際模擬秒數為準，
-  而非將滑桿平均分為三等分。
-*/
-
 const DISPLAY_STAGES = [
   {
     name: "心房收縮期",
     start: 0,
     color: "#edbd72",
     description:
-      "心房收縮，將血液推入心室。"
+      "心房收縮，將血液泵入心室。"
   },
   {
     name: "心室收縮期",
     start: TIMING.ventricularStart,
     color: "#e78397",
     description:
-      "心室收縮，將血液推入肺動脈及主動脈。"
+      "心室收縮，將血液泵入肺動脈及主動脈。"
   },
   {
     name: "舒張期",
     start: TIMING.semilunarCloseEnd,
     color: "#76dcca",
     description:
-      "心肌舒張，讓血液流入各心腔。"
+      "心肌舒張，讓血液流入心腔。"
   }
 ];
 
 let bpm = 70;
-let playbackSpeed = 0.25;
+let playbackSpeed = 0.2;
 
 let cycle = 0;
 let simulationTime = 0;
@@ -2975,7 +2988,7 @@ function updateTimingUI() {
     );
 
     element.title =
-      `${stage.name}：` +
+      `${stage.name}: ` +
       `${Math.round(stage.start * 1000)}–` +
       `${Math.round(end * 1000)} 毫秒`;
 
@@ -2991,7 +3004,7 @@ function openingText(value) {
   }
 
   if (value > 0.98) {
-    return "開放";
+    return "開啟";
   }
 
   return "活動中";
@@ -3084,7 +3097,6 @@ function updateHeart(time, deltaTime) {
   aortic.update(semilunarOpen);
   pulmonary.update(semilunarOpen);
 
-  // 腱索同時跟隨乳頭肌及瓣葉的附著點。
   for (const item of chordItems) {
     deformPoint(
       item.tip,
@@ -3128,9 +3140,9 @@ function updateHeart(time, deltaTime) {
     positions.needsUpdate = true;
   }
 
-  saMaterial.emissiveIntensity =
-    0.25 +
-    3.3 * Math.exp(
+ saMaterial.emissiveIntensity =
+    0.3 +
+    5.0 * Math.exp(
       -Math.pow(
         (time - 0.015) / 0.020,
         2
@@ -3138,8 +3150,8 @@ function updateHeart(time, deltaTime) {
     );
 
   avMaterial.emissiveIntensity =
-    0.25 +
-    2.5 *
+    0.3 +
+    4.0 *
       ss(0.055, 0.075, time) *
       (1 - ss(0.15, 0.17, time));
 
@@ -3178,8 +3190,9 @@ function updateHeart(time, deltaTime) {
         )
       );
 
+    // Boosted emissive intensity peak from 2.6 to 4.8 for extreme color sharpness
     item.material.emissiveIntensity =
-      0.22 + 2.6 * activation;
+      0.3 + 4.8 * activation;
   }
 
   liquidClock.value = simulationTime;
@@ -3191,7 +3204,6 @@ function updateHeart(time, deltaTime) {
     semilunarOpen
   );
 
-  // 只顯示所要求的三個階段。
   const [name, description] = phaseInfo(time);
 
   $("phaseName").textContent = name;
@@ -3202,16 +3214,16 @@ function updateHeart(time, deltaTime) {
   $("atrialStatus").textContent =
     time >= TIMING.atrialStart &&
     time < TIMING.atrialEnd
-      ? "收縮中"
+      ? "收縮"
       : "舒張";
 
   $("ventStatus").textContent =
     time >= TIMING.ventricularStart &&
     time < TIMING.semilunarCloseEnd
-      ? "收縮中"
+      ? "收縮"
       : time >= TIMING.semilunarCloseEnd &&
         time < TIMING.relaxationEnd
-        ? "舒張中"
+        ? "正在舒張"
         : "舒張";
 
   $("avStatus").textContent =
@@ -3265,13 +3277,6 @@ $("restart").addEventListener("click", () => {
 $("rate").addEventListener("input", event => {
   bpm = Number(event.target.value);
 
-  /*
-    保留已經歷的傳導時間。
-
-    若新選定的間隔已經流逝，
-    則開始下一個竇房結週期，
-    而非壓縮目前衝動的傳導序列。
-  */
   if (cycle >= heartPeriodSeconds()) {
     cycle = 0;
     clearFlow();
@@ -3342,6 +3347,8 @@ function updateTransparency() {
   }
 }
 
+$("ghost").checked = true;
+
 $("ghost").addEventListener(
   "change",
   updateTransparency
@@ -3368,10 +3375,6 @@ $("anterior").addEventListener("click", () => {
 
 $("posterior").addEventListener("click", () => {
   setView(0, 1.30, -8.3);
-});
-
-$("reset").addEventListener("click", () => {
-  setView(0.25, 1.55, 8.3);
 });
 
 $("inspectSeptum").addEventListener("click", () => {
@@ -3544,10 +3547,6 @@ function animate(now) {
   let deltaTime = 0;
 
   if (playing && !scrubbing) {
-    /*
-      播放速度控制觀看速度。
-      BPM 只控制竇房結至竇房結的間隔。
-    */
     deltaTime = frameDelta * playbackSpeed;
 
     cycle += deltaTime;
